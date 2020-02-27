@@ -1,4 +1,3 @@
-# project-template
 # Succinct de Bruijn Graph
 
 
