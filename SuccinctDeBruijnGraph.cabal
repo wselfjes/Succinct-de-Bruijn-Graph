@@ -1,0 +1,102 @@
+cabal-version: 1.24
+
+-- This file has been generated from package.yaml by hpack version 0.31.2.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 22aca1d43a4b746b5f709fa4a6e27a94e86fd322c99fd06cfa51d7c1014d5951
+
+name:           SuccinctDeBruijnGraph
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/iu-haskell-spring-2020/my-project#readme>
+author:         Andrey Chertkov
+maintainer:     a.chertkov@innopolis.ru
+license:        BSD3
+license-file:   LICENSE
+build-type:     Custom
+extra-source-files:
+    README.md
+    ChangeLog.md
+
+custom-setup
+  setup-depends:
+      Cabal
+    , base
+    , cabal-doctest >=1.0.2 && <1.1
+    , containers
+
+library
+  exposed-modules:
+      SuccinctDeBruijn
+      Types.AssemblyGraphs
+      Types.DNA
+  other-modules:
+      Paths_SuccinctDeBruijnGraph
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -fno-warn-type-defaults
+  build-depends:
+      array
+    , base >=4.7 && <5
+    , bitarray
+    , containers
+    , doctest
+    , split
+  default-language: Haskell2010
+
+executable SuccinctDeBruijnGraph-exe
+  main-is: Main.hs
+  other-modules:
+      Paths_SuccinctDeBruijnGraph
+  hs-source-dirs:
+      app
+  ghc-options: -Wall -fno-warn-type-defaults -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      SuccinctDeBruijnGraph
+    , array
+    , base >=4.7 && <5
+    , bitarray
+    , containers
+    , doctest
+    , split
+  default-language: Haskell2010
+
+test-suite doctests
+  type: exitcode-stdio-1.0
+  main-is: doctests.hs
+  hs-source-dirs:
+      test
+  ghc-options: -Wall -fno-warn-type-defaults
+  build-depends:
+      Glob
+    , QuickCheck
+    , array
+    , base
+    , bitarray
+    , containers
+    , doctest
+    , split
+    , template-haskell
+  default-language: Haskell2010
+
+test-suite spec
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      DeBruijnGraphSpec
+      Paths_SuccinctDeBruijnGraph
+  hs-source-dirs:
+      test
+  ghc-options: -Wall -fno-warn-type-defaults -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      HUnit
+    , QuickCheck
+    , SuccinctDeBruijnGraph
+    , array
+    , base >=4.7 && <5
+    , bitarray
+    , containers
+    , doctest
+    , hspec
+    , split
+  default-language: Haskell2010
