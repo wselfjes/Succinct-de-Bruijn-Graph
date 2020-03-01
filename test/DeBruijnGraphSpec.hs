@@ -4,14 +4,19 @@ import           Test.Hspec
 import           Types.AssemblyGraphs
 import           Types.DNA
 
+dnaSequences :: [DNASequence]
 dnaSequences = map DNASequence ["TT", "TC", "CG", "GG", "GA", "AA", "AG"]
 
+deBruijnGraph :: DeBruijnGraph
 deBruijnGraph = fromDNASequences 2 dnaSequences
 
 testBuildSimpleGraph :: IO ()
-testBuildSimpleGraph = assembledSequence `shouldBe` DNASequence "TTCGAAGG"
+testBuildSimpleGraph = assembledSequence `shouldBe` DNASequence "ATGGCGTGCA"
   where
-    assembledSequence = assemblyDeBruijn deBruijnGraph
+    assembledSequence = assemblyDeBruijn deBruijnGraph'
+    dnaSequences' =
+      map DNASequence ["CGTGCAA", "ATGGCGT", "CAATGGC", "GGCGTGC", "TGCAATG"]
+    deBruijnGraph' = fromDNASequences 3 dnaSequences'
 
 testSuccessor :: IO ()
 testSuccessor = successors `shouldBe` map DNASequence ["TC", "TT"]
@@ -19,7 +24,6 @@ testSuccessor = successors `shouldBe` map DNASequence ["TC", "TT"]
     successors =
       map (numberToSequence 2) $
       successorEdges (bitArr deBruijnGraph) (sequenceToNumber (DNASequence "T"))
-    bitArr (DeBruijnGraph _ b _ _) = b
 
 testSequenceToNumber :: IO ()
 testSequenceToNumber = num `shouldBe` 10
@@ -30,18 +34,21 @@ testSelect :: IO ()
 testSelect = s `shouldBe` 0
   where
     s = select (bitArr deBruijnGraph) 1
-    bitArr (DeBruijnGraph _ b _ _) = b
 
 testRank :: IO ()
 testRank = s `shouldBe` 7
   where
     s = rank (bitArr deBruijnGraph) 40
-    bitArr (DeBruijnGraph _ b _ _) = b
 
 testSelectStartEdge :: IO ()
 testSelectStartEdge = numberToSequence 2 e `shouldBe` DNASequence "TC"
   where
     e = selectStartEdge deBruijnGraph
+
+testSelectNodes :: IO ()
+testSelectNodes = nodes `shouldBe` (3, 2)
+  where
+    nodes = selectNodes (occurrences deBruijnGraph) (p deBruijnGraph)
 
 testToNode :: IO ()
 testToNode = numberToSequence 1 n `shouldBe` DNASequence "C"
@@ -79,6 +86,7 @@ spec =
     it "Select" testSelect
     it "Rank" testRank
     it "Successor" testSuccessor
+    it "Select Pivoting Nodes" testSelectNodes
     it "Select Start Edge" testSelectStartEdge
     it "Check edge" testCheckEdge
     it "Euler Back Tracking" testEulerBackTracking

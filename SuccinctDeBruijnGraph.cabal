@@ -4,11 +4,11 @@ cabal-version: 1.24
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 22aca1d43a4b746b5f709fa4a6e27a94e86fd322c99fd06cfa51d7c1014d5951
+-- hash: d7d95f25714df432d7b34c48e3c404088d1ed391f452f0b3dae1ea1351b75b64
 
 name:           SuccinctDeBruijnGraph
 version:        0.1.0.0
-description:    Please see the README on GitHub at <https://github.com/iu-haskell-spring-2020/my-project#readme>
+description:    Please see the README
 author:         Andrey Chertkov
 maintainer:     a.chertkov@innopolis.ru
 license:        BSD3
