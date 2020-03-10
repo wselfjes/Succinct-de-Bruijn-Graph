@@ -14,8 +14,7 @@ testBuildSimpleGraph :: IO ()
 testBuildSimpleGraph = assembledSequence `shouldBe` DNASequence "ATGGCGTGCA"
   where
     assembledSequence = assemblyDeBruijn deBruijnGraph'
-    dnaSequences' =
-      map DNASequence ["CGTGCAA", "ATGGCGT", "CAATGGC", "GGCGTGC", "TGCAATG"]
+    dnaSequences' = map DNASequence ["ATGGCGTGCA"]
     deBruijnGraph' = fromDNASequences 3 dnaSequences'
 
 testSuccessor :: IO ()
