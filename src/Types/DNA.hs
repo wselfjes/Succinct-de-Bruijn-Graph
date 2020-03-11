@@ -1,13 +1,36 @@
+{-# LANGUAGE InstanceSigs #-}
+
 module Types.DNA where
 
 import           Prelude hiding (seq)
 
 newtype DNASequence =
-  DNASequence String
-  deriving (Eq)
+  DNASequence [Alphabet]
+  deriving (Eq, Show)
 
-instance Show DNASequence where
-  show (DNASequence string) = string
+instance Semigroup DNASequence where
+  (<>) :: DNASequence -> DNASequence -> DNASequence
+  (<>) (DNASequence []) seq2 = seq2
+  (<>) seq1 (DNASequence []) = seq1
+  (<>) (DNASequence seq1) (DNASequence seq2) =
+    DNASequence $ seq1 <> findTail seq1 seq2
+    where
+      findTail _ [] = []
+      findTail [] seq2' = seq2'
+      findTail seq1' seq2' =
+        if last seq1' == head seq2'
+          then findTail (init seq1') (tail seq2')
+          else seq2'
+
+instance Monoid DNASequence where
+  mempty = DNASequence []
+
+data Alphabet
+  = A
+  | C
+  | G
+  | T
+  deriving (Enum, Eq, Show)
 
 chunk :: Int -> [a] -> [[a]]
 chunk n xs =
@@ -24,33 +47,18 @@ sequenceToNumber :: DNASequence -> Int
 sequenceToNumber (DNASequence seq) =
   sum $
   map
-    (\(num, letter) -> 4 ^ num * letterToNum letter)
+    (\(num, letter) -> 4 ^ num * fromEnum letter)
     (zip [seqLength,(seqLength - 1) .. 0] seq)
   where
     seqLength = length seq - 1
-    letterToNum 'A' = 0
-    letterToNum 'C' = 1
-    letterToNum 'G' = 2
-    letterToNum 'T' = 3
-    letterToNum _   = -1
 
 numberToSequence :: Int -> Int -> DNASequence
 numberToSequence p x = DNASequence $ reverse $ take p $ num2Seq' x
   where
-    num2Seq' 0 = [numToLetter 0 | _ <- [1 .. p]]
+    num2Seq' 0 = [toEnum 0 | _ <- [1 .. p]]
     num2Seq' y =
       let (a, b) = quotRem y 4
-       in numToLetter b : num2Seq' a
-    numToLetter 0 = 'A'
-    numToLetter 1 = 'C'
-    numToLetter 2 = 'G'
-    numToLetter 3 = 'T'
-    numToLetter _ = 'E'
-
-(+++) :: DNASequence -> DNASequence -> DNASequence
-(+++) (DNASequence "") seq2 = seq2
-(+++) seq1 (DNASequence "") = seq1
-(+++) (DNASequence seq1) (DNASequence seq2) = DNASequence $ seq1 ++ [last seq2]
+       in toEnum b : num2Seq' a
 
 getToNode :: DNASequence -> Int
 getToNode (DNASequence seq') = sequenceToNumber $ DNASequence (tail seq')

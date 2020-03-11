@@ -1,8 +1,10 @@
 module Types.AssemblyGraphs where
 
-import           Data.Array
-import           Data.BitArray
+import           Control.Arrow ((&&&))
+import           Data.Function (on)
+import qualified Data.HashMap  as HM
 import qualified Data.Set      as Set
+import qualified Data.Vector   as Vec
 import           Prelude       hiding (seq)
 import           Types.DNA
 
@@ -14,10 +16,9 @@ type Base = Int
 
 data DeBruijnGraph =
   DeBruijnGraph
-    { p           :: Base
-    , bitArr      :: BitArray
-    , includes    :: [(Int, Bool)]
-    , occurrences :: Array Edge Int
+    { graphBase :: Base
+    , bitArr    :: Vec.Vector Bool
+    , counts    :: HM.Map Edge Int
     }
 
 instance Show DeBruijnGraph where
@@ -25,35 +26,52 @@ instance Show DeBruijnGraph where
     where
       multiplicityList =
         map
-          (\(ind, value) -> (numberToSequence (p deBruijnGraph) ind, value))
-          ((assocs . occurrences) deBruijnGraph)
+          (\(ind, value) ->
+             (numberToSequence (graphBase deBruijnGraph) ind, value))
+          edgeCount
+      edgeCount = zip [0 ..] (Vec.toList multipliedVec')
+      multipliedVec' = multipliedVec deBruijnGraph
 
 instance Eq DeBruijnGraph where
-  (==) (DeBruijnGraph p1 bitArr1 _ arr1) (DeBruijnGraph p2 bitArr2 _ arr2) =
-    p1 == p2 && arr1 == arr2 && bitArr1 == bitArr2
+  (==) = (==) `on` (graphBase &&& bitArr &&& counts)
+
+multipliedVec :: DeBruijnGraph -> Vec.Vector Int
+multipliedVec deBruijnGraph =
+  Vec.imap
+    (\i x ->
+       if x
+         then lookup' i
+         else 0)
+    (bitArr deBruijnGraph)
+  where
+    lookup' key =
+      case value of
+        (Just v) -> v
+        Nothing  -> 1
+      where
+        value = HM.lookup key (counts deBruijnGraph)
 
 emptyDeBruijn :: Base -> DeBruijnGraph
 emptyDeBruijn base =
   DeBruijnGraph
-    { p = base
-    , bitArr = bitArray (0, 4 ^ base - 1) []
-    , includes = []
-    , occurrences = array (0, 4 ^ base - 1) [(i, 0) | i <- [0 .. 4 ^ base - 1]]
+    { graphBase = base
+    , bitArr = Vec.generate (4 ^ base) (const False)
+    , counts = HM.empty
     }
 
 insertSequence :: DNASequence -> DeBruijnGraph -> DeBruijnGraph
-insertSequence seq deBruijnGraph
-  | length (show seq) > p deBruijnGraph =
-    insertSequences (splitByN (p deBruijnGraph) seq) deBruijnGraph
-  | otherwise =
-    deBruijnGraph
-      {bitArr = newBitArray, includes = newInserted, occurrences = newArr}
+insertSequence dnaseq@(DNASequence seq) deBruijnGraph
+  | length seq > graphBase deBruijnGraph =
+    insertSequences (splitByN (graphBase deBruijnGraph) dnaseq) deBruijnGraph
+  | otherwise = deBruijnGraph {bitArr = newBitArray, counts = counts'}
   where
-    setNumber = sequenceToNumber seq
-    newInserted = (setNumber, True) : includes deBruijnGraph
-    newBitArray = bitArray (bitArrayBounds (bitArr deBruijnGraph)) newInserted
-    occures = (occurrences deBruijnGraph ! setNumber) + 1
-    newArr = occurrences deBruijnGraph // [(setNumber, occures)]
+    setNumber = sequenceToNumber dnaseq
+    newBitArray = bitArr deBruijnGraph Vec.// [(setNumber, True)]
+    c = counts deBruijnGraph
+    counts' =
+      if HM.member setNumber c
+        then HM.update (Just . (+ 1)) setNumber c
+        else HM.insert setNumber 1 c
 
 insertSequences :: [DNASequence] -> DeBruijnGraph -> DeBruijnGraph
 insertSequences [] deBruijnGraph = deBruijnGraph
@@ -64,56 +82,66 @@ insertSequences (seq:seqs) deBruijnGraph = insertSequences seqs newDeBruijnGraph
 fromDNASequences :: Base -> [DNASequence] -> DeBruijnGraph
 fromDNASequences base seqs = insertSequences seqs (emptyDeBruijn base)
 
-(///) :: DeBruijnGraph -> DNASequence -> DeBruijnGraph
-(///) deBruijnGraph seq' =
-  deBruijnGraph
-    {bitArr = newBitArr, includes = newIncludes, occurrences = newOccurrences}
+diffSequence :: DeBruijnGraph -> DNASequence -> DeBruijnGraph
+diffSequence deBruijnGraph seq' =
+  deBruijnGraph {bitArr = newBitArr, counts = counts''}
   where
     edge = sequenceToNumber seq'
-    occurrence = occurrences deBruijnGraph ! edge
-    newOccurrences = occurrences deBruijnGraph // [(edge, occurrence - 1)]
-    newBitArr = bitArray (0, 4 ^ p deBruijnGraph - 1) newIncludes
-    newIncludes =
-      if newOccurrences ! edge == 0
-        then filter (\(ind, _) -> ind /= edge) (includes deBruijnGraph)
-        else includes deBruijnGraph
+    (oldCount, counts') =
+      HM.updateLookupWithKey (\_ v -> Just (v - 1)) edge (counts deBruijnGraph)
+    counts'' =
+      case oldCount of
+        (Just 1) -> HM.delete edge counts'
+        _        -> counts'
+    newBitArr =
+      case oldCount of
+        (Just 1) -> bitArr deBruijnGraph Vec.// [(edge, False)]
+        Nothing  -> bitArr deBruijnGraph Vec.// [(edge, False)]
+        _        -> bitArr deBruijnGraph
+
+(///) :: DeBruijnGraph -> DNASequence -> DeBruijnGraph
+(///) = diffSequence
 
 eulerBackTracking ::
-     DeBruijnGraph -> Edge -> [Edge] -> [DNASequence] -> [DNASequence]
-eulerBackTracking deBruijnGraph (-1) (newCurrent:xs) path =
-  eulerBackTracking deBruijnGraph newCurrent xs path
-eulerBackTracking deBruijnGraph current [] path
-  | null successors = newPath
-  | otherwise = eulerPath deBruijnGraph successor [] newPath
+     DeBruijnGraph -> Maybe Edge -> [Edge] -> [DNASequence] -> [DNASequence]
+eulerBackTracking deBruijnGraph Nothing (newCurrent:xs) path =
+  eulerBackTracking deBruijnGraph (Just newCurrent) xs path
+eulerBackTracking _ Nothing [] path = path
+eulerBackTracking deBruijnGraph (Just current) [] path =
+  case successors of
+    (_:_) -> eulerPath deBruijnGraph successor [] newPath
+    _     -> newPath
   where
     successors =
       (successorEdges (bitArr deBruijnGraph) .
-       getFromNode . numberToSequence (p deBruijnGraph))
+       getFromNode . numberToSequence (graphBase deBruijnGraph))
         current
     successor = head successors
-    newPath = numberToSequence (p deBruijnGraph) current : path
-eulerBackTracking deBruijnGraph current visited@(newCurrent:xs) path
-  | null successors = eulerBackTracking deBruijnGraph newCurrent xs newPath
-  | otherwise = eulerPath deBruijnGraph successor visited newPath
+    newPath = numberToSequence (graphBase deBruijnGraph) current : path
+eulerBackTracking deBruijnGraph (Just current) visited@(newCurrent:xs) path =
+  case successors of
+    (_:_) -> eulerPath deBruijnGraph successor visited newPath
+    _     -> eulerBackTracking deBruijnGraph (Just newCurrent) xs newPath
   where
     successors =
       (successorEdges (bitArr deBruijnGraph) .
-       getFromNode . numberToSequence (p deBruijnGraph))
+       getFromNode . numberToSequence (graphBase deBruijnGraph))
         current
     successor = head successors
-    newPath = numberToSequence (p deBruijnGraph) current : path
+    newPath = numberToSequence (graphBase deBruijnGraph) current : path
 
 eulerPath :: DeBruijnGraph -> Edge -> [Edge] -> [DNASequence] -> [DNASequence]
-eulerPath deBruijnGraph current visited path
-  | null successors = eulerBackTracking newDeBruijnGraph (-1) newVisited path
-  | otherwise = eulerPath newDeBruijnGraph newCurrent newVisited path
+eulerPath deBruijnGraph current visited path =
+  case successors of
+    (_:_) -> eulerPath newDeBruijnGraph newCurrent newVisited path
+    _     -> eulerBackTracking newDeBruijnGraph Nothing newVisited path
   where
     successors =
       (successorEdges (bitArr newDeBruijnGraph) .
-       getToNode . numberToSequence (p newDeBruijnGraph))
+       getToNode . numberToSequence (graphBase newDeBruijnGraph))
         current
     newDeBruijnGraph =
-      deBruijnGraph /// numberToSequence (p deBruijnGraph) current
+      deBruijnGraph /// numberToSequence (graphBase deBruijnGraph) current
     successor = head successors
     newVisited = current : visited
     newCurrent = successor
@@ -140,20 +168,20 @@ selectEndNode l = endNode
         then fst $ head (filter (\(_, (in', _)) -> in' > 0) l)
         else fst $ head filteredL
 
-calculateInEdges :: Array Edge Int -> Node -> Base -> Int
+calculateInEdges :: Vec.Vector Int -> Node -> Base -> Int
 calculateInEdges arr node base =
-  arr ! node + arr ! (node + 4 ^ base) + arr ! (node + 4 ^ base * 2) +
-  arr ! (node + 4 ^ base * 3)
+  arr Vec.! node + arr Vec.! (node + 4 ^ base) + arr Vec.! (node + 4 ^ base * 2) +
+  arr Vec.! (node + 4 ^ base * 3)
 
-calculateOutEdges :: Array Edge Int -> Node -> Int
+calculateOutEdges :: Vec.Vector Int -> Node -> Int
 calculateOutEdges arr node =
-  arr ! node + arr ! (node + 1) + arr ! (node + 2) + arr ! (node + 3)
+  arr Vec.! node + arr Vec.! (node + 1) + arr Vec.! (node + 2) +
+  arr Vec.! (node + 3)
 
-selectNodes :: Array Edge Int -> Base -> (Node, Node)
-selectNodes arr base =
-  (selectStartNode $ assocs inOutArray, selectEndNode $ assocs inOutArray)
+selectNodes :: Vec.Vector Int -> Base -> (Node, Node)
+selectNodes arr base = (selectStartNode inOutArray, selectEndNode inOutArray)
   where
-    inOutArray = array (0, arrSize) [inOut i | i <- [0 .. arrSize]]
+    inOutArray = [inOut i | i <- [0 .. arrSize]]
     arrSize = (4 ^ (base - 1)) - 1
     inOut i =
       (i, (calculateInEdges arr i (base - 1), calculateOutEdges arr (4 * i)))
@@ -162,9 +190,11 @@ selectStartEdge :: DeBruijnGraph -> Edge
 selectStartEdge deBruijnGraph =
   head $
   successorEdges (bitArr deBruijnGraph) $
-  fst (selectNodes (occurrences deBruijnGraph) (p deBruijnGraph))
+  fst (selectNodes multipliedVec' (graphBase deBruijnGraph))
+  where
+    multipliedVec' = multipliedVec deBruijnGraph
 
-successorEdges :: BitArray -> Node -> [Edge]
+successorEdges :: Vec.Vector Bool -> Node -> [Edge]
 successorEdges bitArr' node = s
   where
     ranks =
@@ -174,7 +204,7 @@ successorEdges bitArr' node = s
     successors = map (select bitArr') ranks
     s = filter (>= 0) $ Set.toList $ Set.fromList successors
 
-select :: BitArray -> Int -> Int
+select :: Vec.Vector Bool -> Int -> Int
 select bitArr' i = select' bitList i 0 - 1
   where
     select' [] _ ind          = ind
@@ -182,15 +212,21 @@ select bitArr' i = select' bitList i 0 - 1
     select' (False:_) 0 ind   = ind
     select' (True:xs) i' ind  = select' xs (i' - 1) (ind + 1)
     select' (False:xs) i' ind = select' xs i' (ind + 1)
-    bitList = bits bitArr'
+    bitList = Vec.toList bitArr'
 
-rank :: BitArray -> Int -> Int
+rank :: Vec.Vector Bool -> Int -> Int
 rank bitArr' i = sum $ take (i + 1) bitList
   where
-    bitList = bits01 bitArr'
+    bitList =
+      map
+        (\x ->
+           if x
+             then 1
+             else 0)
+        (Vec.toList bitArr')
 
 assemblyDeBruijn :: DeBruijnGraph -> DNASequence
-assemblyDeBruijn deBruijnGraph = foldl (+++) (DNASequence "") eulerPath'
+assemblyDeBruijn deBruijnGraph = mconcat eulerPath'
   where
     eulerPath' = eulerPath deBruijnGraph startEdge [] []
     startEdge = selectStartEdge deBruijnGraph

@@ -4,7 +4,7 @@ cabal-version: 1.24
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: d7d95f25714df432d7b34c48e3c404088d1ed391f452f0b3dae1ea1351b75b64
+-- hash: ed2495d31fd408298c351155401e573d69be6a25bf99fe8f83185d51ae176384
 
 name:           SuccinctDeBruijnGraph
 version:        0.1.0.0
@@ -24,6 +24,8 @@ custom-setup
     , base
     , cabal-doctest >=1.0.2 && <1.1
     , containers
+    , hashmap
+    , vector
 
 library
   exposed-modules:
@@ -36,12 +38,12 @@ library
       src
   ghc-options: -Wall -fno-warn-type-defaults
   build-depends:
-      array
-    , base >=4.7 && <5
-    , bitarray
+      base >=4.7 && <5
     , containers
     , doctest
+    , hashmap
     , split
+    , vector
   default-language: Haskell2010
 
 executable SuccinctDeBruijnGraph-exe
@@ -53,12 +55,12 @@ executable SuccinctDeBruijnGraph-exe
   ghc-options: -Wall -fno-warn-type-defaults -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       SuccinctDeBruijnGraph
-    , array
     , base >=4.7 && <5
-    , bitarray
     , containers
     , doctest
+    , hashmap
     , split
+    , vector
   default-language: Haskell2010
 
 test-suite doctests
@@ -70,13 +72,13 @@ test-suite doctests
   build-depends:
       Glob
     , QuickCheck
-    , array
     , base
-    , bitarray
     , containers
     , doctest
+    , hashmap
     , split
     , template-haskell
+    , vector
   default-language: Haskell2010
 
 test-suite spec
@@ -92,11 +94,11 @@ test-suite spec
       HUnit
     , QuickCheck
     , SuccinctDeBruijnGraph
-    , array
     , base >=4.7 && <5
-    , bitarray
     , containers
     , doctest
+    , hashmap
     , hspec
     , split
+    , vector
   default-language: Haskell2010

@@ -5,34 +5,34 @@ import           Types.AssemblyGraphs
 import           Types.DNA
 
 dnaSequences :: [DNASequence]
-dnaSequences = map DNASequence ["TT", "TC", "CG", "GG", "GA", "AA", "AG"]
+dnaSequences =
+  map DNASequence [[T, T], [T, C], [C, G], [G, G], [G, A], [A, A], [A, G]]
 
 deBruijnGraph :: DeBruijnGraph
 deBruijnGraph = fromDNASequences 2 dnaSequences
 
 testBuildSimpleGraph :: IO ()
-testBuildSimpleGraph = assembledSequence `shouldBe` DNASequence "ATGGCGTGCA"
+testBuildSimpleGraph =
+  assembledSequence `shouldBe` DNASequence [T, T, C, G, A, A, G, G]
   where
-    assembledSequence = assemblyDeBruijn deBruijnGraph'
-    dnaSequences' = map DNASequence ["ATGGCGTGCA"]
-    deBruijnGraph' = fromDNASequences 3 dnaSequences'
+    assembledSequence = assemblyDeBruijn deBruijnGraph
 
 testSuccessor :: IO ()
-testSuccessor = successors `shouldBe` map DNASequence ["TC", "TT"]
+testSuccessor = successors `shouldBe` map DNASequence [[T, C], [T, T]]
   where
     successors =
       map (numberToSequence 2) $
-      successorEdges (bitArr deBruijnGraph) (sequenceToNumber (DNASequence "T"))
+      successorEdges (bitArr deBruijnGraph) (sequenceToNumber (DNASequence [T]))
 
 testSequenceToNumber :: IO ()
 testSequenceToNumber = num `shouldBe` 10
   where
-    num = sequenceToNumber (DNASequence "GG")
+    num = sequenceToNumber (DNASequence [G, G])
 
 testSelect :: IO ()
-testSelect = s `shouldBe` 0
+testSelect = s `shouldBe` 2
   where
-    s = select (bitArr deBruijnGraph) 1
+    s = select (bitArr deBruijnGraph) 2
 
 testRank :: IO ()
 testRank = s `shouldBe` 7
@@ -40,43 +40,43 @@ testRank = s `shouldBe` 7
     s = rank (bitArr deBruijnGraph) 40
 
 testSelectStartEdge :: IO ()
-testSelectStartEdge = numberToSequence 2 e `shouldBe` DNASequence "TC"
+testSelectStartEdge = numberToSequence 2 e `shouldBe` DNASequence [T, C]
   where
     e = selectStartEdge deBruijnGraph
 
 testSelectNodes :: IO ()
 testSelectNodes = nodes `shouldBe` (3, 2)
   where
-    nodes = selectNodes (occurrences deBruijnGraph) (p deBruijnGraph)
+    nodes = selectNodes (multipliedVec deBruijnGraph) (graphBase deBruijnGraph)
 
 testToNode :: IO ()
-testToNode = numberToSequence 1 n `shouldBe` DNASequence "C"
+testToNode = numberToSequence 1 n `shouldBe` DNASequence [C]
   where
-    n = getToNode $ DNASequence "TC"
+    n = getToNode $ DNASequence [T, C]
 
 testEulerBackTracking :: IO ()
-testEulerBackTracking = s `shouldBe` map DNASequence ["TT", "TC"]
+testEulerBackTracking = s `shouldBe` map DNASequence [[T, T], [T, C]]
   where
     s =
       eulerBackTracking
         graph
-        ((sequenceToNumber . DNASequence) "TT")
+        (Just ((sequenceToNumber . DNASequence) [T, T]))
         []
-        [DNASequence "TC"]
+        [DNASequence [T, C]]
     graph = emptyDeBruijn 2
 
 testEulerPath :: IO ()
-testEulerPath = s `shouldBe` map DNASequence ["TT"]
+testEulerPath = s `shouldBe` [DNASequence [T, T]]
   where
     s = eulerPath graph startEdge [] []
-    startEdge = (sequenceToNumber . DNASequence) "TT"
-    graph = fromDNASequences 2 [DNASequence "TT"]
+    startEdge = (sequenceToNumber . DNASequence) [T, T]
+    graph = fromDNASequences 2 [DNASequence [T, T]]
 
 testCheckEdge :: IO ()
 testCheckEdge = g `shouldBe` emptyDeBruijn 2
   where
-    g = graph /// DNASequence "TT"
-    graph = fromDNASequences 2 [DNASequence "TT"]
+    g = graph /// DNASequence [T, T]
+    graph = fromDNASequences 2 [DNASequence [T, T]]
 
 spec :: Spec
 spec =

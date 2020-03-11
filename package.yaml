@@ -20,6 +20,8 @@ description:         Please see the README
 custom-setup:
   dependencies:
   - containers
+  - vector
+  - hashmap
   - base
   - Cabal
   - cabal-doctest >=1.0.2 && <1.1
@@ -29,8 +31,8 @@ ghc-options:
 
 dependencies:
 - containers
-- bitarray
-- array
+- vector
+- hashmap
 - split
 - base >= 4.7 && < 5
 - doctest
