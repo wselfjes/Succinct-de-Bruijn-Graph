@@ -1,51 +1,59 @@
-{-# LANGUAGE InstanceSigs #-}
-
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE InstanceSigs  #-}
 module Types.DNA where
 
-import           Prelude hiding (seq)
+import           Data.String  (IsString (..))
+import           GHC.Generics (Generic)
+import           Prelude      hiding (seq)
 
--- | DNASequence is list of Alphabet
-newtype DNASequence =
-  DNASequence [Alphabet]
-  deriving (Eq, Show)
+-- $setup
+-- >>> :set -XOverloadedStrings
 
--- | DNASequence is a semigroup
--- >>> DNASequence [T,T] <> DNASequence [T,A] <> DNASequence [A,C]
--- DNASequence [T,T,A,C]
--- >>> DNASequence [T,T] <> (DNASequence [T,A] <> DNASequence [A,C])
--- DNASequence [T,T,A,C]
--- >>> (DNASequence [T,T] <> DNASequence [T,A]) <> DNASequence [A,C]
--- DNASequence [T,T,A,C]
-instance Semigroup DNASequence where
-  (<>) :: DNASequence -> DNASequence -> DNASequence
-  (<>) (DNASequence []) seq2 = seq2
-  (<>) seq1 (DNASequence []) = seq1
-  (<>) (DNASequence seq1) (DNASequence seq2) =
-    DNASequence $ seq1 <> findTail seq1 seq2
-    where
-      findTail _ [] = []
-      findTail [] seq2' = seq2'
-      findTail seq1' seq2' =
-        if last seq1' == head seq2'
-          then findTail (init seq1') (tail seq2')
-          else seq2'
+-- | DNA is a sequence of 'Nucleotide's.
+newtype DNASequence = DNASequence { getDNASequence :: [Nucleotide] }
+  deriving (Eq, Generic)
 
--- | DNASequence is a monoid.
--- Empty element is empty list
-instance Monoid DNASequence where
-  mempty = DNASequence []
+instance Show DNASequence where
+  show = concatMap show . getDNASequence
 
--- | Alphabet is Enum of possible values.
--- A is Adenine
--- C is Cytosine
--- G is Guanine
--- T is Thymine
-data Alphabet
-  = A
-  | C
-  | G
-  | T
-  deriving (Enum, Eq, Show)
+-- |
+-- >>> getDNASequence "ACTG"
+-- [A,C,T,G]
+instance IsString DNASequence where
+  fromString = unsafeParseDNASequence
+
+-- |
+unsafeParseDNASequence :: String -> DNASequence
+unsafeParseDNASequence = DNASequence . map unsafeCharToNucleotide
+
+unsafeCharToNucleotide :: Char -> Nucleotide
+unsafeCharToNucleotide 'A' = A
+unsafeCharToNucleotide 'C' = C
+unsafeCharToNucleotide 'G' = G
+unsafeCharToNucleotide 'T' = T
+unsafeCharToNucleotide c = error $
+    "Invalide nucleotide " <> show c <> " (should be one of " <> show allNucleotides <> ")"
+
+allNucleotides :: [Nucleotide]
+allNucleotides = [minBound..maxBound]
+
+mergeDNASequence :: DNASequence -> DNASequence -> DNASequence
+mergeDNASequence (DNASequence l) (DNASequence r) = DNASequence (merge l r [])
+  where
+    merge xs ys []
+      | xs == ys = xs ++ ys
+    merge xs ys prefix
+      | xs == take lenXs ys = prefix ++ ys
+      | otherwise = merge (drop 1 xs) ys (prefix ++ take 1 xs)
+        where
+          lenXs = length xs
+
+-- | DNA nucleotide.
+data Nucleotide = A
+    | C
+    | G
+    | T
+    deriving (Enum, Eq, Show, Bounded)
 
 -- | Separate sequence to overlaping chunks
 chunk ::

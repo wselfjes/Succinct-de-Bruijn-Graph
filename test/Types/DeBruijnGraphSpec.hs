@@ -1,4 +1,4 @@
-module DeBruijnGraphSpec where
+module Types.DeBruijnGraphSpec where
 
 import           Test.Hspec
 import           Types.AssemblyGraphs

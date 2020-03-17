@@ -63,6 +63,7 @@ tests:
     dependencies:
     - SuccinctDeBruijnGraph
     - hspec
+    - hspec-core
     - HUnit
     - QuickCheck
     - doctest

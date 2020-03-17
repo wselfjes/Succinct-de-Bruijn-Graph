@@ -15,25 +15,27 @@ type Node = Int
 type Base = Int
 
 -- | Structure for de Bruijn Graph
-data DeBruijnGraph =
-  DeBruijnGraph
+data DeBruijnGraph = DeBruijnGraph
     { graphBase :: Base -- ^ Length of the graph edge
+    --
     , bitArr    :: Vec.Vector Bool -- ^ Bit array for succinct de Bruijn Graph
+    --
     , counts    :: HM.Map Edge Int -- ^ Counts of edges in graph
     }
 
--- | >>> show (emptyDeBruijn 2)
--- [(DNASequence [A,A],0),(DNASequence [A,C],0),(DNASequence [A,G],0),(DNASequence [A,T],0),(DNASequence [C,A],0),(DNASequence [C,C],0),(DNASequence [C,G],0),(DNASequence [C,T],0),(DNASequence [G,A],0),(DNASequence [G,C],0),(DNASequence [G,G],0),(DNASequence [G,T],0),(DNASequence [T,A],0),(DNASequence [T,C],0),(DNASequence [T,G],0),(DNASequence [T,T],0)]
 instance Show DeBruijnGraph where
-  show deBruijnGraph = show multiplicityList
-    where
-      multiplicityList =
+  show = show . toMultiplicityList
+
+toMultiplicityList :: DeBruijnGraph -> [(DNASequence, Int)]
+toMultiplicityList deBruijnGraph = multiplicityList
+  where
+    multiplicityList =
         map
           (\(ind, value) ->
              (numberToSequence (graphBase deBruijnGraph) ind, value))
           edgeCount
-      edgeCount = zip [0 ..] (Vec.toList multipliedVec')
-      multipliedVec' = multipliedVec deBruijnGraph
+    edgeCount = zip [0 ..] (Vec.toList multipliedVec')
+    multipliedVec' = multipliedVec deBruijnGraph
 
 -- | Graph equals if graphBase bitArr and counts are Equal
 instance Eq DeBruijnGraph where
@@ -59,8 +61,8 @@ multipliedVec deBruijnGraph =
         value = HM.lookup key (counts deBruijnGraph)
 
 -- * Constructions
--- | >>> emptyDeBruijn 2
--- [(DNASequence [A,A],0),(DNASequence [A,C],0),(DNASequence [A,G],0),(DNASequence [A,T],0),(DNASequence [C,A],0),(DNASequence [C,C],0),(DNASequence [C,G],0),(DNASequence [C,T],0),(DNASequence [G,A],0),(DNASequence [G,C],0),(DNASequence [G,G],0),(DNASequence [G,T],0),(DNASequence [T,A],0),(DNASequence [T,C],0),(DNASequence [T,G],0),(DNASequence [T,T],0)]
+-- | >>> show (emptyDeBruijn 2)
+-- "[(AA,0),(AC,0),(AG,0),(AT,0),(CA,0),(CC,0),(CG,0),(CT,0),(GA,0),(GC,0),(GG,0),(GT,0),(TA,0),(TC,0),(TG,0),(TT,0)]"
 emptyDeBruijn ::
      Base -- ^ Length of the edge.
   -> DeBruijnGraph -- ^ Empty de Bruijn Graph. Without any edge.
@@ -308,7 +310,7 @@ rank bitArr' i = sum $ take (i + 1) bitList
 assemblyDeBruijn ::
      DeBruijnGraph -- ^ de Bruijn Graph
   -> DNASequence -- ^ Assembled DNA
-assemblyDeBruijn deBruijnGraph = mconcat eulerPath'
+assemblyDeBruijn deBruijnGraph = foldl (mergeDNASequence) (DNASequence []) eulerPath'
   where
     eulerPath' = eulerPath deBruijnGraph startEdge [] []
     startEdge = selectStartEdge deBruijnGraph

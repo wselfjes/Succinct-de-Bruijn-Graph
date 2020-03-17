@@ -4,7 +4,7 @@ cabal-version: 1.24
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: ed2495d31fd408298c351155401e573d69be6a25bf99fe8f83185d51ae176384
+-- hash: 97e42d232ccd52e6040d0dd5376cec355c2fdef81449c66394a0a16fef517d06
 
 name:           SuccinctDeBruijnGraph
 version:        0.1.0.0
@@ -85,7 +85,8 @@ test-suite spec
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
-      DeBruijnGraphSpec
+      Types.DeBruijnGraphSpec
+      Types.DNASpec
       Paths_SuccinctDeBruijnGraph
   hs-source-dirs:
       test
@@ -99,6 +100,7 @@ test-suite spec
     , doctest
     , hashmap
     , hspec
+    , hspec-core
     , split
     , vector
   default-language: Haskell2010
