@@ -1,11 +1,11 @@
 module Types.AssemblyGraphs where
 
-import           Control.Arrow ((&&&))
-import           Data.Function (on)
-import qualified Data.HashMap  as HM
-import qualified Data.Set      as Set
-import qualified Data.Vector   as Vec
-import           Prelude       hiding (seq)
+import           Control.Arrow      ((&&&))
+import           Data.Function      (on)
+import qualified Data.IntMap.Strict as IntMap
+import qualified Data.Set           as Set
+import qualified Data.Vector        as Vec
+import           Prelude            hiding (seq)
 import           Types.DNA
 
 type Edge = Int
@@ -15,18 +15,16 @@ type Node = Int
 type Base = Int
 
 -- | Structure for de Bruijn Graph
-data DeBruijnGraph = DeBruijnGraph
+data DeBruijnGraph alphabet = DeBruijnGraph
     { graphBase :: Base -- ^ Length of the graph edge
-    --
     , bitArr    :: Vec.Vector Bool -- ^ Bit array for succinct de Bruijn Graph
-    --
-    , counts    :: HM.Map Edge Int -- ^ Counts of edges in graph
+    , counts    :: IntMap.IntMap Int -- ^ Counts of edges in graph
     }
 
-instance Show DeBruijnGraph where
+instance (Show a, Eq a, Enum a) => Show (DeBruijnGraph a) where
   show = show . toMultiplicityList
 
-toMultiplicityList :: DeBruijnGraph -> [(DNASequence, Int)]
+toMultiplicityList :: (Enum a) => DeBruijnGraph a -> [(Sequence a, Int)]
 toMultiplicityList deBruijnGraph = multiplicityList
   where
     multiplicityList =
@@ -38,12 +36,12 @@ toMultiplicityList deBruijnGraph = multiplicityList
     multipliedVec' = multipliedVec deBruijnGraph
 
 -- | Graph equals if graphBase bitArr and counts are Equal
-instance Eq DeBruijnGraph where
+instance Eq (DeBruijnGraph a) where
   (==) = (==) `on` (graphBase &&& bitArr &&& counts)
 
 -- | Get edges with counts
 multipliedVec ::
-     DeBruijnGraph -- ^ de Bruijn Graph
+     DeBruijnGraph a -- ^ de Bruijn Graph
   -> Vec.Vector Int -- ^ Vector where index is number of edge and value is number of occurences in graph.
 multipliedVec deBruijnGraph =
   Vec.imap
@@ -58,73 +56,77 @@ multipliedVec deBruijnGraph =
         (Just v) -> v
         Nothing  -> 1
       where
-        value = HM.lookup key (counts deBruijnGraph)
+        value = IntMap.lookup key (counts deBruijnGraph)
 
 -- * Constructions
 -- | >>> show (emptyDeBruijn 2)
 -- "[(AA,0),(AC,0),(AG,0),(AT,0),(CA,0),(CC,0),(CG,0),(CT,0),(GA,0),(GC,0),(GG,0),(GT,0),(TA,0),(TC,0),(TG,0),(TT,0)]"
 emptyDeBruijn ::
      Base -- ^ Length of the edge.
-  -> DeBruijnGraph -- ^ Empty de Bruijn Graph. Without any edge.
+  -> DeBruijnGraph a -- ^ Empty de Bruijn Graph. Without any edge.
 emptyDeBruijn base =
   DeBruijnGraph
     { graphBase = base
     , bitArr = Vec.generate (4 ^ base) (const False)
-    , counts = HM.empty
+    , counts = IntMap.empty
     }
 
 -- | Create de Bruijn Graph from Sequences
-fromDNASequences ::
-     Base -- ^ Length of the edge
-  -> [DNASequence] -- ^ Sequeences which will be inserted
-  -> DeBruijnGraph -- ^ de Bruijn Graph with those sequences
-fromDNASequences base seqs = insertSequences seqs (emptyDeBruijn base)
+fromSequences 
+  :: (Enum a)
+  => Base -- ^ Length of the edge
+  -> [Sequence a] -- ^ Sequeences which will be inserted
+  -> DeBruijnGraph a -- ^ de Bruijn Graph with those sequences
+fromSequences base seqs = insertSequences seqs (emptyDeBruijn base)
 
 -- * Operations
 -- | Insert sequence into graph.
 -- If length of the sequence is greater then base of the graph sequence splited into overlaped chunks.
-insertSequence ::
-     DNASequence -- ^ Sequence.
-  -> DeBruijnGraph -- ^ de Bruijn graph.
-  -> DeBruijnGraph -- ^ de Bruijn graph with sequence.
-insertSequence dnaseq@(DNASequence seq) deBruijnGraph
-  | length seq > graphBase deBruijnGraph =
-    insertSequences (splitByN (graphBase deBruijnGraph) dnaseq) deBruijnGraph
+insertSequence 
+  :: (Enum a)
+  => Sequence a -- ^ Sequence.
+  -> DeBruijnGraph a -- ^ de Bruijn graph.
+  -> DeBruijnGraph a -- ^ de Bruijn graph with sequence.
+insertSequence seq@(Sequence l) deBruijnGraph
+  | length l > graphBase deBruijnGraph =
+    insertSequences (splitByN (graphBase deBruijnGraph) seq) deBruijnGraph
   | otherwise = deBruijnGraph {bitArr = newBitArray, counts = counts'}
   where
-    setNumber = sequenceToNumber dnaseq
+    setNumber = sequenceToNumber seq
     newBitArray = bitArr deBruijnGraph Vec.// [(setNumber, True)]
     c = counts deBruijnGraph
     counts' =
-      if HM.member setNumber c
-        then HM.update (Just . (+ 1)) setNumber c
-        else HM.insert setNumber 1 c
+      if IntMap.member setNumber c
+        then IntMap.update (Just . (+ 1)) setNumber c
+        else IntMap.insert setNumber 1 c
 
 -- | Insert multiple sequences into de Bruijn graph.
-insertSequences ::
-     [DNASequence] -- ^ sequences to insert.
-  -> DeBruijnGraph -- ^ de Bruijn Graph.
-  -> DeBruijnGraph -- ^ de Bruijn Graph with those sequences.
+insertSequences 
+  :: (Enum a)
+  => [Sequence a] -- ^ sequences to insert.
+  -> DeBruijnGraph a -- ^ de Bruijn Graph.
+  -> DeBruijnGraph a -- ^ de Bruijn Graph with those sequences.
 insertSequences [] deBruijnGraph = deBruijnGraph
 insertSequences (seq:seqs) deBruijnGraph = insertSequences seqs newDeBruijnGraph
   where
     newDeBruijnGraph = insertSequence seq deBruijnGraph
 
 -- | Remove sequence from the graph. If sequence is empty original graph will be returned.
-diffSequence ::
-     DeBruijnGraph -- ^ de Bruijn Graph.
-  -> DNASequence -- ^ Sequence which will be removed from de Bruijn Graph.
-  -> DeBruijnGraph -- ^ de Bruijn Graph without sequence.
-diffSequence deBruijnGraph (DNASequence []) = deBruijnGraph
+diffSequence 
+  :: (Enum a)
+  => DeBruijnGraph a -- ^ de Bruijn Graph.
+  -> Sequence a -- ^ Sequence which will be removed from de Bruijn Graph.
+  -> DeBruijnGraph a -- ^ de Bruijn Graph without sequence.
+diffSequence deBruijnGraph (Sequence []) = deBruijnGraph
 diffSequence deBruijnGraph seq' =
   deBruijnGraph {bitArr = newBitArr, counts = counts''}
   where
     edge = sequenceToNumber seq'
     (oldCount, counts') =
-      HM.updateLookupWithKey (\_ v -> Just (v - 1)) edge (counts deBruijnGraph)
+      IntMap.updateLookupWithKey (\_ v -> Just (v - 1)) edge (counts deBruijnGraph)
     counts'' =
       case oldCount of
-        (Just 1) -> HM.delete edge counts'
+        (Just 1) -> IntMap.delete edge counts'
         _        -> counts'
     newBitArr =
       case oldCount of
@@ -133,19 +135,21 @@ diffSequence deBruijnGraph seq' =
         _        -> bitArr deBruijnGraph
 
 -- | Alias for diffSequence
-(///) ::
-     DeBruijnGraph -- ^ de Bruijn Graph.
-  -> DNASequence -- ^ Sequence which will be removed from de Bruijn Graph.
-  -> DeBruijnGraph -- ^ de Bruijn Graph without sequence.
+(///) 
+  :: (Enum a)
+  => DeBruijnGraph a -- ^ de Bruijn Graph.
+  -> Sequence a -- ^ Sequence which will be removed from de Bruijn Graph.
+  -> DeBruijnGraph a -- ^ de Bruijn Graph without sequence.
 (///) = diffSequence
 
 -- |
-eulerBackTracking ::
-     DeBruijnGraph -- ^ de Bruijn Graph
+eulerBackTracking 
+  :: (Enum a)
+  => DeBruijnGraph a -- ^ de Bruijn Graph
   -> Maybe Edge -- ^ Starting edge for backtracking. If nothing Starting edge gets from visited edges
   -> [Edge] -- ^ Visited edges
-  -> [DNASequence] -- ^ Path
-  -> [DNASequence] -- ^ Result Path
+  -> [Sequence a] -- ^ Path
+  -> [Sequence a] -- ^ Result Path
 eulerBackTracking deBruijnGraph Nothing (newCurrent:xs) path =
   eulerBackTracking deBruijnGraph (Just newCurrent) xs path
 eulerBackTracking _ Nothing [] path = path
@@ -173,12 +177,13 @@ eulerBackTracking deBruijnGraph (Just current) visited@(newCurrent:xs) path =
     newPath = numberToSequence (graphBase deBruijnGraph) current : path
 
 -- | Find Euler Path in de Bruijn Graph. An Euler path is a path that uses every edge of a graph exactly once.
-eulerPath ::
-     DeBruijnGraph -- ^ de Bruijn Graph
+eulerPath 
+  :: (Enum a)
+  => DeBruijnGraph a -- ^ de Bruijn Graph
   -> Edge -- ^ Starting edge
   -> [Edge] -- ^ Visited edges
-  -> [DNASequence] -- ^ Path
-  -> [DNASequence] -- ^ Result path
+  -> [Sequence a] -- ^ Path
+  -> [Sequence a] -- ^ Result path
 eulerPath deBruijnGraph current visited path =
   case successors of
     (_:_) -> eulerPath newDeBruijnGraph newCurrent newVisited path
@@ -254,7 +259,7 @@ selectNodes arr base = (selectStartNode inOutArray, selectEndNode inOutArray)
 
 -- | Select start edge for euler path
 selectStartEdge ::
-     DeBruijnGraph -- ^ de Bruijn Graph
+     DeBruijnGraph a -- ^ de Bruijn Graph
   -> Edge -- ^ Start edge for euler path
 selectStartEdge deBruijnGraph =
   head $
@@ -307,10 +312,10 @@ rank bitArr' i = sum $ take (i + 1) bitList
         (Vec.toList bitArr')
 
 -- | Assembly de Bruijn Graph. Create original DNA from sequencing subDNAs
-assemblyDeBruijn ::
-     DeBruijnGraph -- ^ de Bruijn Graph
+assemblyDeBruijn 
+  :: DeBruijnGraph Nucleotide -- ^ de Bruijn Graph
   -> DNASequence -- ^ Assembled DNA
-assemblyDeBruijn deBruijnGraph = foldl (mergeDNASequence) (DNASequence []) eulerPath'
+assemblyDeBruijn deBruijnGraph = foldl (mergeDNASequence) (Sequence []) eulerPath'
   where
     eulerPath' = eulerPath deBruijnGraph startEdge [] []
     startEdge = selectStartEdge deBruijnGraph

@@ -1,5 +1,5 @@
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE InstanceSigs  #-}
+{-# LANGUAGE DeriveGeneric   #-}
+{-# LANGUAGE InstanceSigs    #-}
 module Types.DNA where
 
 import           Data.String  (IsString (..))
@@ -9,22 +9,40 @@ import           Prelude      hiding (seq)
 -- $setup
 -- >>> :set -XOverloadedStrings
 
--- | DNA is a sequence of 'Nucleotide's.
-newtype DNASequence = DNASequence { getDNASequence :: [Nucleotide] }
+-- | Sequence is abstract sequence of arbitrary alphabet
+newtype Sequence a = Sequence { getSequence :: [a]}
   deriving (Eq, Generic)
 
-instance Show DNASequence where
-  show = concatMap show . getDNASequence
+-- | DNA nucleotide.
+data Nucleotide = A
+    | C
+    | G
+    | T
+    deriving (Enum, Eq, Show, Bounded)
+
+-- | DNA is a sequence of 'Nucleotide's.
+--newtype DNASequence = DNASequence { getDNASequence :: Sequence Nucleotide }
+--  deriving (Eq, Generic)
+type DNASequence = Sequence Nucleotide
+
+--newtype DNASequence = DNASequence { getDNASequence :: [Nucleotide] }
+--  deriving (Eq, Generic)
+
+instance (Show a) => Show (Sequence a) where
+  show = concatMap show . getSequence 
 
 -- |
 -- >>> getDNASequence "ACTG"
 -- [A,C,T,G]
-instance IsString DNASequence where
-  fromString = unsafeParseDNASequence
+instance (IsString a) => IsString (Sequence a) where
+  fromString = Sequence . map fromString . map (\x -> [x])
+
+instance IsString Nucleotide where
+  fromString = unsafeCharToNucleotide . (head)
 
 -- |
 unsafeParseDNASequence :: String -> DNASequence
-unsafeParseDNASequence = DNASequence . map unsafeCharToNucleotide
+unsafeParseDNASequence = Sequence . map unsafeCharToNucleotide
 
 unsafeCharToNucleotide :: Char -> Nucleotide
 unsafeCharToNucleotide 'A' = A
@@ -38,7 +56,7 @@ allNucleotides :: [Nucleotide]
 allNucleotides = [minBound..maxBound]
 
 mergeDNASequence :: DNASequence -> DNASequence -> DNASequence
-mergeDNASequence (DNASequence l) (DNASequence r) = DNASequence (merge l r [])
+mergeDNASequence (Sequence l) (Sequence r) = Sequence (merge l r [])
   where
     merge xs ys []
       | xs == ys = xs ++ ys
@@ -47,13 +65,6 @@ mergeDNASequence (DNASequence l) (DNASequence r) = DNASequence (merge l r [])
       | otherwise = merge (drop 1 xs) ys (prefix ++ take 1 xs)
         where
           lenXs = length xs
-
--- | DNA nucleotide.
-data Nucleotide = A
-    | C
-    | G
-    | T
-    deriving (Enum, Eq, Show, Bounded)
 
 -- | Separate sequence to overlaping chunks
 chunk ::
@@ -71,26 +82,29 @@ chunk n xs =
 -- Wrapper of chunk
 splitByN ::
      Int -- ^ Length of subsequence
-  -> DNASequence -- ^ Original sequence
-  -> [DNASequence] -- ^ List of subsequences
-splitByN n (DNASequence seq) = map DNASequence (chunk n seq)
+  -> Sequence a -- ^ Original sequence
+  -> [Sequence a] -- ^ List of subsequences
+splitByN n (Sequence seq) = map Sequence (chunk n seq)
 
 -- | Sequence to number
-sequenceToNumber :: DNASequence -> Int
-sequenceToNumber (DNASequence seq) =
+sequenceToNumber :: (Enum a) => Sequence a -> Int
+sequenceToNumber (Sequence seq) =
   sum $
   map
-    (\(num, letter) -> 4 ^ num * fromEnum letter)
+    (\(num, letter) -> base ^ num * (fromEnum letter))
     (zip [seqLength,(seqLength - 1) .. 0] seq)
   where
     seqLength = length seq - 1
+    maxNumber = maxBound :: Nucleotide
+    base = fromEnum maxNumber + 1
 
 -- | Number to sequence
-numberToSequence ::
-     Int -- ^ Length of result sequences
+numberToSequence 
+  :: (Enum a) 
+  => Int -- ^ Length of result sequences
   -> Int -- ^ Original number
-  -> DNASequence -- ^ Resulting sequence
-numberToSequence p x = DNASequence $ reverse $ take p $ num2Seq' x
+  -> Sequence a -- ^ Resulting sequence
+numberToSequence p x = (Sequence . reverse . take p . num2Seq') x
   where
     num2Seq' 0 = [toEnum 0 | _ <- [1 .. p]]
     num2Seq' y =
@@ -99,8 +113,8 @@ numberToSequence p x = DNASequence $ reverse $ take p $ num2Seq' x
 
 -- | Get node in which edge goes
 getToNode :: DNASequence -> Int
-getToNode (DNASequence seq') = sequenceToNumber $ DNASequence (tail seq')
+getToNode (Sequence seq') = sequenceToNumber $ Sequence (tail seq')
 
 -- | Get node from which edge goes
 getFromNode :: DNASequence -> Int
-getFromNode (DNASequence seq') = sequenceToNumber $ DNASequence (init seq')
+getFromNode (Sequence seq') = sequenceToNumber $ Sequence (init seq')

@@ -7,12 +7,13 @@ import           Test.Hspec.Core.QuickCheck
 import           Test.QuickCheck
 import           Types.DNA
 
+
+
 instance Arbitrary Nucleotide where
   arbitrary = elements allNucleotides
 
-instance Arbitrary DNASequence where
-  arbitrary = DNASequence <$> arbitrary
-  shrink = genericShrink
+instance (Arbitrary a) => Arbitrary (Sequence a) where
+  arbitrary = Sequence <$> arbitrary
 
 testOverlappingDNASequence :: IO ()
 testOverlappingDNASequence =(("AAAC" :: DNASequence) `mergeDNASequence` ("ACGT" :: DNASequence))

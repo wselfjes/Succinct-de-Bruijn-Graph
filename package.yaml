@@ -67,6 +67,11 @@ tests:
     - HUnit
     - QuickCheck
     - doctest
+    - containers
+    - vector
+    - hashmap
+    - split
+    - base >= 4.7 && < 5
 
   doctests:
     source-dirs: test
