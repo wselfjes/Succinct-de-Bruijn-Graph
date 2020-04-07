@@ -3,12 +3,21 @@ module SuccinctDeBruijn where
 
 import           Types.AssemblyGraphs
 import           Types.DNA
+import           Data.Fasta.String.Parse
+import           Data.Fasta.String.Types
 
-dnaSequence :: [DNASequence]
-dnaSequence = ["TT", "TC", "CG", "GG", "GA", "AA", "AG"]
 
-deBruijnGraph :: DeBruijnGraph Nucleotide
-deBruijnGraph = fromSequences 2 dnaSequence
+assembly :: [String] -> DNASequence
+assembly fastaSequences = assembledSequence 
+  where 
+    seqs = map unsafeParseDNASequence fastaSequences
+    deBruijnGraph = fromSequences 25 seqs
+    assembledSequence = assemblyDeBruijn deBruijnGraph
 
 run :: IO ()
-run = putStrLn "Nothing here, please run tests"
+run = do
+  fastaData <- readFile "data/sar324_contigs_lane1.fa"
+  let parsedFasta = parseFasta fastaData
+  let assembledSequence = assembly (map fastaSeq parsedFasta)
+  putStrLn (show assembledSequence)
+

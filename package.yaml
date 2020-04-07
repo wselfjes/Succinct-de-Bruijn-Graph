@@ -22,7 +22,7 @@ custom-setup:
   - containers
   - vector
   - hashmap
-  - base
+  - base >= 4.7 && < 5
   - Cabal
   - cabal-doctest >=1.0.2 && <1.1
 
@@ -36,6 +36,8 @@ dependencies:
 - split
 - base >= 4.7 && < 5
 - doctest
+- fasta
+- text
 
 library:
   source-dirs: 
