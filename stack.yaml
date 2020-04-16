@@ -7,3 +7,4 @@ extra-deps:
 - pipes-text-0.0.2.5
 - pipes-safe-2.3.2
 - streaming-commons-0.2.1.2
+- Unique-0.4.7.7

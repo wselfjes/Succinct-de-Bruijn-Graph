@@ -11,14 +11,14 @@ import           Prelude      hiding (seq)
 
 -- | Sequence is abstract sequence of arbitrary alphabet
 newtype Sequence a = Sequence { getSequence :: [a]}
-  deriving (Eq, Generic)
+  deriving (Eq, Generic, Ord)
 
 -- | DNA nucleotide.
 data Nucleotide = A
     | C
     | G
     | T
-    deriving (Enum, Eq, Show, Bounded)
+    deriving (Enum, Eq, Show, Bounded, Ord)
 
 -- | DNA is a sequence of 'Nucleotide's.
 --newtype DNASequence = DNASequence { getDNASequence :: Sequence Nucleotide }

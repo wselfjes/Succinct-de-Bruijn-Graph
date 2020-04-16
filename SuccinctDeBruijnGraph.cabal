@@ -4,7 +4,7 @@ cabal-version: 1.24
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: d0c7f8f4b337d547751c177183f685050521594adfb342f2723b4db8aaf18685
+-- hash: 81a989de0b884b8af1ec98095383c60da989ff5f382f326d5e243842f5616bb0
 
 name:           SuccinctDeBruijnGraph
 version:        0.1.0.0
@@ -29,6 +29,7 @@ custom-setup
 
 library
   exposed-modules:
+      Plotting.DeBruijnGraphPlotting
       SuccinctDeBruijn
       Types.AssemblyGraphs
       Types.DNA
@@ -38,10 +39,12 @@ library
       src
   ghc-options: -Wall -fno-warn-type-defaults
   build-depends:
-      base >=4.7 && <5
+      Unique
+    , base >=4.7 && <5
     , containers
     , doctest
     , fasta
+    , graphviz
     , hashmap
     , split
     , text
@@ -57,10 +60,12 @@ executable SuccinctDeBruijnGraph-exe
   ghc-options: -Wall -fno-warn-type-defaults -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       SuccinctDeBruijnGraph
+    , Unique
     , base >=4.7 && <5
     , containers
     , doctest
     , fasta
+    , graphviz
     , hashmap
     , split
     , text
@@ -76,10 +81,12 @@ test-suite doctests
   build-depends:
       Glob
     , QuickCheck
+    , Unique
     , base
     , containers
     , doctest
     , fasta
+    , graphviz
     , hashmap
     , split
     , template-haskell
@@ -101,10 +108,12 @@ test-suite spec
       HUnit
     , QuickCheck
     , SuccinctDeBruijnGraph
+    , Unique
     , base >=4.7 && <5
     , containers
     , doctest
     , fasta
+    , graphviz
     , hashmap
     , hspec
     , hspec-core

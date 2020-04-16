@@ -38,6 +38,8 @@ dependencies:
 - doctest
 - fasta
 - text
+- graphviz
+- Unique
 
 library:
   source-dirs: 

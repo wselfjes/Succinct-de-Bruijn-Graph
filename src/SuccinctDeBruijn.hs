@@ -6,14 +6,13 @@ import           Types.DNA
 import           Data.Fasta.String.Parse
 import           Data.Fasta.String.Types
 import           System.Environment
+import           Plotting.DeBruijnGraphPlotting
 
 
-assembly :: Base -> [String] -> DNASequence
-assembly base fastaSequences = assembledSequence 
-  where 
-    seqs = map unsafeParseDNASequence fastaSequences
-    deBruijnGraph = fromSequences base seqs
-    assembledSequence = assemblyDeBruijn deBruijnGraph
+--assembly :: DeBruijnGraph Nucleotide -> DNASequence
+--assembly deBruijnGraph = assembledSequence 
+--  where 
+--    assembledSequence = assemblyDeBruijn deBruijnGraph
 
 run :: IO ()
 run = do
@@ -23,10 +22,13 @@ run = do
     (fileName, base) -> do
           fastaData <- readFile fileName 
           let parsedFasta = parseFasta fastaData
-          let assembledSequence = assembly base (map fastaSeq parsedFasta)
+          let readsString = (map fastaSeq parsedFasta)
+          let readsDNASequences = map unsafeParseDNASequence readsString
+          let deBruijnGraph = fromSequences base readsDNASequences :: DeBruijnGraph Nucleotide
+          drawGraph deBruijnGraph
+          let assembledSequence = assemblyDeBruijn deBruijnGraph 
           writeFile "data/result.txt" (show assembledSequence)
           putStrLn (show assembledSequence)
-
 
 
 parseArgs :: IO (String, Base)
