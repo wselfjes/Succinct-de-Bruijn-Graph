@@ -72,7 +72,7 @@ emptyDeBruijn base =
     }
 
 -- | Create de Bruijn Graph from Sequences
-fromSequences 
+fromSequences
   :: (Enum a)
   => Base -- ^ Length of the edge
   -> [Sequence a] -- ^ Sequeences which will be inserted
@@ -82,7 +82,7 @@ fromSequences base seqs = insertSequences seqs (emptyDeBruijn base)
 -- * Operations
 -- | Insert sequence into graph.
 -- If length of the sequence is greater then base of the graph sequence splited into overlaped chunks.
-insertSequence 
+insertSequence
   :: (Enum a)
   => Sequence a -- ^ Sequence.
   -> DeBruijnGraph a -- ^ de Bruijn graph.
@@ -101,7 +101,7 @@ insertSequence seq@(Sequence l) deBruijnGraph
         else IntMap.insert setNumber 1 c
 
 -- | Insert multiple sequences into de Bruijn graph.
-insertSequences 
+insertSequences
   :: (Enum a)
   => [Sequence a] -- ^ sequences to insert.
   -> DeBruijnGraph a -- ^ de Bruijn Graph.
@@ -112,7 +112,7 @@ insertSequences (seq:seqs) deBruijnGraph = insertSequences seqs newDeBruijnGraph
     newDeBruijnGraph = insertSequence seq deBruijnGraph
 
 -- | Remove sequence from the graph. If sequence is empty original graph will be returned.
-diffSequence 
+diffSequence
   :: (Enum a)
   => DeBruijnGraph a -- ^ de Bruijn Graph.
   -> Sequence a -- ^ Sequence which will be removed from de Bruijn Graph.
@@ -135,7 +135,7 @@ diffSequence deBruijnGraph seq' =
         _        -> bitArr deBruijnGraph
 
 -- | Alias for diffSequence
-(///) 
+(///)
   :: (Enum a)
   => DeBruijnGraph a -- ^ de Bruijn Graph.
   -> Sequence a -- ^ Sequence which will be removed from de Bruijn Graph.
@@ -143,7 +143,7 @@ diffSequence deBruijnGraph seq' =
 (///) = diffSequence
 
 -- |
-eulerBackTracking 
+eulerBackTracking
   :: (Enum a)
   => DeBruijnGraph a -- ^ de Bruijn Graph
   -> Maybe Edge -- ^ Starting edge for backtracking. If nothing Starting edge gets from visited edges
@@ -177,7 +177,7 @@ eulerBackTracking deBruijnGraph (Just current) visited@(newCurrent:xs) path =
     newPath = numberToSequence (graphBase deBruijnGraph) current : path
 
 -- | Find Euler Path in de Bruijn Graph. An Euler path is a path that uses every edge of a graph exactly once.
-eulerPath 
+eulerPath
   :: (Enum a)
   => DeBruijnGraph a -- ^ de Bruijn Graph
   -> Edge -- ^ Starting edge
@@ -312,7 +312,7 @@ rank bitArr' i = sum $ take (i + 1) bitList
         (Vec.toList bitArr')
 
 -- | Assembly de Bruijn Graph. Create original DNA from sequencing subDNAs
-assemblyDeBruijn 
+assemblyDeBruijn
   :: DeBruijnGraph Nucleotide -- ^ de Bruijn Graph
   -> DNASequence -- ^ Assembled DNA
 assemblyDeBruijn deBruijnGraph = foldl (mergeDNASequence) (Sequence []) eulerPath'
