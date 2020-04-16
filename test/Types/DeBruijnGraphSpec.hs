@@ -13,9 +13,11 @@ deBruijnGraph = fromSequences 2 dnaSequences
 
 testBuildSimpleGraph :: IO ()
 testBuildSimpleGraph =
-  assembledSequence `shouldBe` "TTCGAAGG"
+  assembledSequence `shouldBe` "ATGGCGTGCA"
   where
     assembledSequence = assemblyDeBruijn deBruijnGraph
+    dnaSequences = ["ATGGCGT", "CGCGTGC", "CGTGCAA", "TGCAATG", "CAATGGC"]
+
 
 testSuccessor :: IO ()
 testSuccessor = successors `shouldBe` ["TC", "TT"]

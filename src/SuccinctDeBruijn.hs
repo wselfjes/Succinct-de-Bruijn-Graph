@@ -5,20 +5,38 @@ import           Types.AssemblyGraphs
 import           Types.DNA
 import           Data.Fasta.String.Parse
 import           Data.Fasta.String.Types
+import           System.Environment
 
 
-assembly :: [String] -> DNASequence
-assembly fastaSequences = assembledSequence 
+assembly :: Base -> [String] -> DNASequence
+assembly base fastaSequences = assembledSequence 
   where 
     seqs = map unsafeParseDNASequence fastaSequences
-    deBruijnGraph = fromSequences 10 seqs
+    deBruijnGraph = fromSequences base seqs
     assembledSequence = assemblyDeBruijn deBruijnGraph
 
 run :: IO ()
 run = do
-  fastaData <- readFile "data/sar324_contigs_lane1.fa"
-  let parsedFasta = parseFasta fastaData
-  let assembledSequence = assembly (map fastaSeq parsedFasta)
-  writeFile "data/result.txt" (show assembledSequence)
-  putStrLn (show assembledSequence)
+  args <- parseArgs
+  case args of
+    ("", 0)          -> putStrLn "Usage: stack run [base] [file]"
+    (fileName, base) -> do
+          fastaData <- readFile fileName 
+          let parsedFasta = parseFasta fastaData
+          let assembledSequence = assembly base (map fastaSeq parsedFasta)
+          writeFile "data/result.txt" (show assembledSequence)
+          putStrLn (show assembledSequence)
 
+
+
+parseArgs :: IO (String, Base)
+parseArgs = do
+  args <- getArgs
+  patternMatching args
+  where
+    patternMatching :: [String] -> IO (String, Base)
+    patternMatching []           = return ("", 0)
+    patternMatching [file]       = return (file, 32)
+    patternMatching [base, file] = return (file, read base)
+    patternMatching _            = return ("", 0)
+                                   
