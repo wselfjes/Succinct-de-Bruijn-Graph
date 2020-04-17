@@ -8,6 +8,7 @@ import           Plotting.DeBruijnGraphPlotting
 import           Text.Read               (readMaybe)
 import           Types.AssemblyGraphs
 import           Types.DNA
+import           System.Exit
 import           System.IO               (BufferMode (..), hSetBuffering,
                                           stdout)
 
@@ -25,19 +26,25 @@ runWithArgs base fileName = do
   putStrLn ("Processing file " <> fileName <> " (using base " <> show base <> ")")
   fastaData <- readFile fileName `as` "Reading file"
   let parsedFasta = parseFasta fastaData
-  print (length parsedFasta) `as` "Number of input sequences"
   let readsString = (map fastaSeq parsedFasta)
   let readsDNASequences = map unsafeParseDNASequence readsString
+  checkReads base readsDNASequences `as` "Checking reads"
   let deBruijnGraph = fromSequences base readsDNASequences :: DeBruijnGraph Nucleotide
   drawGraph deBruijnGraph `as` "Drawing deBruijnGraph"
   let assembledSequence = assemblyDeBruijn deBruijnGraph
   writeFile "data/result.txt" (show assembledSequence) `as` "Writing result"
 
+checkReads :: Base -> [DNASequence] -> IO ()
+checkReads k sequences = do 
+  if length (filter ((< k) . length . getSequence) sequences) > 0 
+  then die "Length of one of the read is less than base" 
+  else return ()
+    
 as :: IO a -> String -> IO a
 command `as` name = do
-  putStr (name ++ "... ")
+  putStr (name ++ "...")
   x <- command
-  putStrLn " [OK]"
+  putStrLn "[OK]"
   return x
 
 parseArgs :: IO (Maybe (String, Base))
