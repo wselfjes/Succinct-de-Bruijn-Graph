@@ -40,7 +40,6 @@ dependencies:
 - text
 - graphviz
 - Unique
-- lens == 4.17.1
 
 library:
   source-dirs: 
