@@ -4,7 +4,7 @@ cabal-version: 1.24
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 81a989de0b884b8af1ec98095383c60da989ff5f382f326d5e243842f5616bb0
+-- hash: cc9d6fe8395812d017b9c577d36a61ae1ac8532416c83bbaf5c948910581e587
 
 name:           SuccinctDeBruijnGraph
 version:        0.1.0.0
@@ -29,10 +29,13 @@ custom-setup
 
 library
   exposed-modules:
+      Data.BitArrays.BitArray
+      Data.BitArrays.VectorBitArray
+      Data.Graph.Algorithms.EulerianWalk
+      Data.Graph.DeBruijnGraph
+      Data.Sequence.DNA
       Plotting.DeBruijnGraphPlotting
       SuccinctDeBruijn
-      Types.AssemblyGraphs
-      Types.DNA
   other-modules:
       Paths_SuccinctDeBruijnGraph
   hs-source-dirs:
@@ -46,6 +49,7 @@ library
     , fasta
     , graphviz
     , hashmap
+    , lens ==4.17.1
     , split
     , text
     , vector
@@ -67,6 +71,7 @@ executable SuccinctDeBruijnGraph-exe
     , fasta
     , graphviz
     , hashmap
+    , lens ==4.17.1
     , split
     , text
     , vector
@@ -88,6 +93,7 @@ test-suite doctests
     , fasta
     , graphviz
     , hashmap
+    , lens ==4.17.1
     , split
     , template-haskell
     , text
@@ -98,8 +104,9 @@ test-suite spec
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
-      Types.DeBruijnGraphSpec
-      Types.DNASpec
+      Data.Graph.Algorithms.EulerianWalkSpec
+      Data.Graph.DeBruijnGraphSpec
+      Data.Sequence.DNASpec
       Paths_SuccinctDeBruijnGraph
   hs-source-dirs:
       test
@@ -117,6 +124,7 @@ test-suite spec
     , hashmap
     , hspec
     , hspec-core
+    , lens ==4.17.1
     , split
     , text
     , vector

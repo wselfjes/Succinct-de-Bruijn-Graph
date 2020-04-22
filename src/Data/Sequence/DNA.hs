@@ -1,6 +1,6 @@
 {-# LANGUAGE DeriveGeneric   #-}
 {-# LANGUAGE InstanceSigs    #-}
-module Types.DNA where
+module Data.Sequence.DNA where
 
 import           Data.String  (IsString (..))
 import           GHC.Generics (Generic)
@@ -32,8 +32,8 @@ instance (Show a) => Show (Sequence a) where
   show = concatMap show . getSequence 
 
 -- |
--- >>> getDNASequence "ACTG"
--- [A,C,T,G]
+-- >>> fromString "ACTG" :: DNASequence
+-- ACTG
 instance (IsString a) => IsString (Sequence a) where
   fromString = Sequence . map fromString . map (\x -> [x])
 
