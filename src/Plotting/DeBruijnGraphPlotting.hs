@@ -23,7 +23,7 @@ toNodeEdgeList
   -> ([NodeGraph String], [EdgeGraph String])
 toNodeEdgeList deBruijnGrpah = (allNodes, allEdges)
   where
-    multiplicityList = filter ((>0) . snd) (toMultiplicityList deBruijnGrpah)
+    multiplicityList = toMultiplicityList deBruijnGrpah
     allEdges = concatMap getEdge multiplicityList
     getEdge :: (DNASequence, Int) -> [(EdgeGraph String)]
     getEdge (sequenceEdge, num) = take num $ repeat ((show . toSequence) fromNode, (show . toSequence) toNode, RegularEdge)

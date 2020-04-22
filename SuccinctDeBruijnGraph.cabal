@@ -4,7 +4,7 @@ cabal-version: 1.24
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: cc9d6fe8395812d017b9c577d36a61ae1ac8532416c83bbaf5c948910581e587
+-- hash: 46af1a4065cc609c882aab88d0076c79f01712fc444d1c4304727997f3d1278a
 
 name:           SuccinctDeBruijnGraph
 version:        0.1.0.0
@@ -49,7 +49,6 @@ library
     , fasta
     , graphviz
     , hashmap
-    , lens ==4.17.1
     , split
     , text
     , vector
@@ -71,7 +70,6 @@ executable SuccinctDeBruijnGraph-exe
     , fasta
     , graphviz
     , hashmap
-    , lens ==4.17.1
     , split
     , text
     , vector
@@ -93,7 +91,6 @@ test-suite doctests
     , fasta
     , graphviz
     , hashmap
-    , lens ==4.17.1
     , split
     , template-haskell
     , text
@@ -124,7 +121,6 @@ test-suite spec
     , hashmap
     , hspec
     , hspec-core
-    , lens ==4.17.1
     , split
     , text
     , vector

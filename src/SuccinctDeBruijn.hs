@@ -31,8 +31,9 @@ runWithArgs base fileName = do
   let readsString = (map fastaSeq parsedFasta)
   let readsDNASequences = map unsafeParseDNASequence readsString
   checkReads base readsDNASequences `as` "Checking reads"
-  let deBruijnGraph = preprocess (fromSequences base readsDNASequences) :: DeBruijnGraph Nucleotide VectorBitArray
-  drawGraph deBruijnGraph `as` "Drawing deBruijnGraph"
+  let rawDeBruijnGraph = fromSequences base readsDNASequences :: DeBruijnGraph Nucleotide VectorBitArray
+  drawGraph rawDeBruijnGraph `as` "Drawing deBruijnGraph"
+  let deBruijnGraph = preprocess rawDeBruijnGraph
   let assembledSequence = assemblyDeBruijnUsingEulerianWalk deBruijnGraph
   writeFile "data/result.txt" (show assembledSequence) `as` "Writing result"
 
