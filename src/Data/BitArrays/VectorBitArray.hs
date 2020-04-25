@@ -17,36 +17,42 @@ instance BitArray VectorBitArray where
 instance Eq VectorBitArray where
   (==) = (==) `on` (getVec)
 
+instance Show VectorBitArray where
+  show = show . getVec
+
 
 -- | Use update Vector function
 setBits' :: VectorBitArray -> [(Int, Bool)] -> VectorBitArray
 setBits' (VectorBitArray vec) listValues = VectorBitArray (vec Vec.// listValues)
 
 -- | Returns the position of the i-th occurrence of 1
-select' ::
-     VectorBitArray -- ^ Bit array
+select' 
+  :: VectorBitArray -- ^ Bit array
+  -> Bool
   -> Int            -- ^ i-th occurrence of 1
   -> Int            -- ^ Position of i-th occurrence of 1 in bit array
-select' (VectorBitArray bitArr') i = select'' bitList i 0 - 1
+select' (VectorBitArray bitArr') val i = (select'' bitList i 0) - 1
   where
-    select'' [] _ ind          = ind
-    select'' (True:_) 0 ind    = ind + 1
-    select'' (False:_) 0 ind   = ind
-    select'' (True:xs) i' ind  = select'' xs (i' - 1) (ind + 1)
-    select'' (False:xs) i' ind = select'' xs i' (ind + 1)
+    select'' [] _ ind = ind
+    select'' _ 0 ind
+      | otherwise   = ind
+    select'' (val':xs) i' ind
+      | val' == val = select'' xs (i' - 1) (ind + 1)
+      | otherwise   = select'' xs i' (ind + 1)
     bitList = Vec.toList bitArr'
 
 -- | Returns the number of elements equal to 1 up to position i
-rank' ::
-     VectorBitArray -- ^ Bit array
+rank' 
+  :: VectorBitArray -- ^ Bit array
+  -> Bool
   -> Int            -- ^ Position i in bit Array
   -> Int            -- ^ Number of ones up to position i
-rank' (VectorBitArray bitArr') i = sum $ take (i + 1) bitList
+rank' (VectorBitArray bitArr') val i = sum $ take (i + 1) bitList
   where
     bitList =
       map
         (\x ->
-           if x
+           if x == val
              then 1
              else 0)
         (Vec.toList bitArr')

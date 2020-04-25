@@ -6,6 +6,7 @@ import           Data.Graph.DeBruijnGraph
 import           Data.Sequence.DNA
 import           Data.BitArrays.VectorBitArray 
 import           Data.BitArrays.BitArray
+import           Data.BitArrays.SDArray
 import           Data.Graph.Algorithms.EulerianWalk
 
 dnaSequences :: [DNASequence]
@@ -22,16 +23,6 @@ testSuccessor = successors `shouldBe` ["TC", "TT"]
       map (numberToSequence 2) $
       successorEdges (bitArr deBruijnGraph) (sequenceToNumber ("T" :: DNASequence))
 
-testSelect :: IO ()
-testSelect = s `shouldBe` 2
-  where
-    s = select (bitArr deBruijnGraph) 2
-
-testRank :: IO ()
-testRank = s `shouldBe` 7
-  where
-    s = rank (bitArr deBruijnGraph) 40
-
 testCheckEdge :: IO ()
 testCheckEdge = g `shouldBe` emptyDeBruijn 2
   where
@@ -41,7 +32,5 @@ testCheckEdge = g `shouldBe` emptyDeBruijn 2
 spec :: Spec
 spec =
   describe "Tests for de Bruijn Graph" $ do
-    it "Select" testSelect
-    it "Rank" testRank
     it "Successor" testSuccessor
     it "Check edge" testCheckEdge

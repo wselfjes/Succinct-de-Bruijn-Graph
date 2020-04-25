@@ -10,6 +10,7 @@ import           Data.Graph.DeBruijnGraph
 import           Data.Graph.Algorithms.EulerianWalk
 import           Data.Sequence.DNA
 import           Data.BitArrays.VectorBitArray
+import           Data.BitArrays.SDArray
 import           System.Exit
 import           System.IO               (BufferMode (..), hSetBuffering,
                                           stdout)
@@ -31,7 +32,7 @@ runWithArgs base fileName = do
   let readsString = (map fastaSeq parsedFasta)
   let readsDNASequences = map unsafeParseDNASequence readsString
   checkReads base readsDNASequences `as` "Checking reads"
-  let rawDeBruijnGraph = fromSequences base readsDNASequences :: DeBruijnGraph Nucleotide VectorBitArray
+  let rawDeBruijnGraph = fromSequences base readsDNASequences :: DeBruijnGraph Nucleotide SDArray
   drawGraph rawDeBruijnGraph `as` "Drawing deBruijnGraph"
   let deBruijnGraph = preprocess rawDeBruijnGraph
   let assembledSequence = assemblyDeBruijnUsingEulerianWalk deBruijnGraph

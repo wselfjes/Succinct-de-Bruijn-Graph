@@ -1,7 +1,6 @@
 module Data.Graph.Algorithms.EulerianWalk where
 
 import           Data.BitArrays.BitArray
-import           Data.BitArrays.VectorBitArray
 import           Data.Sequence.DNA
 import           Data.Graph.DeBruijnGraph
 import qualified Data.Set           as Set
@@ -142,15 +141,16 @@ successorEdges bitArr' node = s
   where
     ranks =
       filter
-        (> rank bitArr' (4 * node - 1))
-        [rank bitArr' (4 * node + n) | n <- [0 .. 3]]
-    successors = map (select bitArr') ranks
+        (> rank bitArr' True (4 * node - 1))
+        [rank bitArr' True (4 * node + n) | n <- [0 .. 3]]
+    successors = map (select bitArr' True) ranks
     s = filter (>= 0) $ Set.toList $ Set.fromList successors
 
 
 -- | Assembly de Bruijn Graph. Create original DNA from sequencing subDNAs
 assemblyDeBruijnUsingEulerianWalk
-  :: DeBruijnGraph Nucleotide VectorBitArray -- ^ de Bruijn Graph
+  :: (BitArray b)
+  => DeBruijnGraph Nucleotide b-- ^ de Bruijn Graph
   -> DNASequence                             -- ^ Assembled DNA
 assemblyDeBruijnUsingEulerianWalk deBruijnGraph = foldl (mergeDNASequence) (Sequence []) eulerPath'
   where
