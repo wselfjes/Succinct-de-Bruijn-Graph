@@ -1,7 +1,8 @@
 module Plotting.DeBruijnGraphPlotting where
 
-import           Types.AssemblyGraphs
-import           Types.DNA
+import           Data.Graph.DeBruijnGraph
+import           Data.Sequence.DNA
+import           Data.BitArrays.BitArray
 import qualified Data.GraphViz as G
 import qualified Data.GraphViz.Attributes.Complete as G
 import           Data.List.Unique 
@@ -17,11 +18,12 @@ type EdgeGraph a = (a, a, ELabel)
 
 
 toNodeEdgeList 
-  :: DeBruijnGraph Nucleotide 
+  :: (BitArray b)
+  => DeBruijnGraph Nucleotide b
   -> ([NodeGraph String], [EdgeGraph String])
 toNodeEdgeList deBruijnGrpah = (allNodes, allEdges)
   where
-    multiplicityList = filter ((>0) . snd) (toMultiplicityList deBruijnGrpah)
+    multiplicityList = toMultiplicityList deBruijnGrpah
     allEdges = concatMap getEdge multiplicityList
     getEdge :: (DNASequence, Int) -> [(EdgeGraph String)]
     getEdge (sequenceEdge, num) = take num $ repeat ((show . toSequence) fromNode, (show . toSequence) toNode, RegularEdge)
@@ -42,7 +44,10 @@ deBruijnGraphParams = G.defaultParams {
   where
     colorAttribute color = [ G.Color $ G.toColorList [ color ] ]
     
-drawGraph :: DeBruijnGraph Nucleotide -> IO ()
+drawGraph 
+  :: (BitArray b)
+  => DeBruijnGraph Nucleotide b 
+  -> IO ()
 drawGraph deBruijnGraph = do
   let (vs, es) = toNodeEdgeList deBruijnGraph
   let dotGraph = G.graphElemsToDot deBruijnGraphParams vs es :: G.DotGraph String

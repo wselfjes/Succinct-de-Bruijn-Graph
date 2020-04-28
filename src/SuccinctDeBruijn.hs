@@ -6,8 +6,11 @@ import           Data.Fasta.String.Types
 import           System.Environment
 import           Plotting.DeBruijnGraphPlotting
 import           Text.Read               (readMaybe)
-import           Types.AssemblyGraphs
-import           Types.DNA
+import           Data.Graph.DeBruijnGraph
+import           Data.Graph.Algorithms.EulerianWalk
+import           Data.Sequence.DNA
+import           Data.BitArrays.VectorBitArray
+import           Data.BitArrays.SDArray
 import           System.Exit
 import           System.IO               (BufferMode (..), hSetBuffering,
                                           stdout)
@@ -29,9 +32,10 @@ runWithArgs base fileName = do
   let readsString = (map fastaSeq parsedFasta)
   let readsDNASequences = map unsafeParseDNASequence readsString
   checkReads base readsDNASequences `as` "Checking reads"
-  let deBruijnGraph = fromSequences base readsDNASequences :: DeBruijnGraph Nucleotide
-  drawGraph deBruijnGraph `as` "Drawing deBruijnGraph"
-  let assembledSequence = assemblyDeBruijn deBruijnGraph
+  let rawDeBruijnGraph = fromSequences base readsDNASequences :: DeBruijnGraph Nucleotide SDArray
+  drawGraph rawDeBruijnGraph `as` "Drawing deBruijnGraph"
+  let deBruijnGraph = preprocess rawDeBruijnGraph
+  let assembledSequence = assemblyDeBruijnUsingEulerianWalk deBruijnGraph
   writeFile "data/result.txt" (show assembledSequence) `as` "Writing result"
 
 checkReads :: Base -> [DNASequence] -> IO ()
