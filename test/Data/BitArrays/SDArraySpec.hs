@@ -1,10 +1,10 @@
 module Data.BitArrays.SDArraySpec where
 
-import           Test.Hspec
-import           Data.BitArrays.SDArray
 import           Data.BitArrays.BitArray
+import           Data.BitArrays.SDArray
 import           Data.BitArrays.VectorBitArray
-import qualified Data.Vector as Vec
+import qualified Data.Vector                   as Vec
+import           Test.Hspec
 
 
 testBuildLower :: IO ()

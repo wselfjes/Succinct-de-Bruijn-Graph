@@ -1,12 +1,12 @@
 module Data.BitArrays.SDArray where
 
 import           Data.BitArrays.BitArray
-import qualified Data.Vector as Vec
-import qualified Data.IntMap as IntMap
 import           Data.BitArrays.VectorBitArray
+import qualified Data.IntMap                   as IntMap
+import qualified Data.Vector                   as Vec
 
 
-data SDArray = SDArray 
+data SDArray = SDArray
   { lowerBits     :: Vec.Vector Int
   , upperBits     :: VectorBitArray
   , ones          :: [Int]
@@ -23,16 +23,16 @@ instance BitArray SDArray where
 sdarrayGenerateEmpty
   :: BitArraySize
   -> SDArray
-sdarrayGenerateEmpty _ = SDArray 
-                              { lowerBits = Vec.generate 0 (const 0) 
-                              , upperBits = generateEmpty 0 
+sdarrayGenerateEmpty _ = SDArray
+                              { lowerBits = Vec.generate 0 (const 0)
+                              , upperBits = generateEmpty 0
                               , ones = [] , bitVectorSize = 0}
 
 sdarraySetBits
   :: SDArray
   -> [(Int, Bool)]
   -> SDArray
-sdarraySetBits sdarray elems = fromOnes newOnes 
+sdarraySetBits sdarray elems = fromOnes newOnes
   where
     intMapOnes = IntMap.fromList (zip (ones sdarray) (repeat True))
     intMapElems = IntMap.fromList elems
@@ -42,7 +42,7 @@ sdarraySetBits sdarray elems = fromOnes newOnes
 fromOnes
   :: [Int]
   -> SDArray
-fromOnes onesPos = SDArray 
+fromOnes onesPos = SDArray
                         { lowerBits     = newLowerBits
                         , upperBits     = newUpperBits
                         , ones          = onesPos
@@ -55,7 +55,7 @@ fromOnes onesPos = SDArray
     lowerBitsList = map (getLowerBits offsetLowerBit) onesPos
     upperBitsList = map (getUpperBits offsetLowerBit) onesPos
     upperBitsPos = zip (map (uncurry (+)) (zip [0..] upperBitsList)) (repeat True)
-    newUpperBits = generateEmpty (2 * (ceiling m)) `setBits` upperBitsPos 
+    newUpperBits = generateEmpty (2 * (ceiling m)) `setBits` upperBitsPos
     newLowerBits = Vec.fromList lowerBitsList
 
 getUpperBits
@@ -70,10 +70,10 @@ getLowerBits
   -> Int
 getLowerBits offset value = value - ((getUpperBits offset value) * 2 ^ (fromIntegral offset))
 
-sdarraySelect 
-  :: SDArray 
+sdarraySelect
+  :: SDArray
   -> Bool
-  -> Int 
+  -> Int
   -> Int
 sdarraySelect (SDArray lwBits upBits onesPos size) _ pos = ((select' upBits True pos) - (pos - 1)) * 2 ^ w + (lwBits Vec.! (pos - 1))
   where

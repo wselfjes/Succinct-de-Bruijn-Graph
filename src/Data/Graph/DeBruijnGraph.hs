@@ -1,12 +1,12 @@
-{-# Language GADTs #-}
+{-# LANGUAGE GADTs #-}
 module Data.Graph.DeBruijnGraph where
 
-import           Control.Arrow      ((&&&))
-import           Data.Function      (on)
-import qualified Data.IntMap.Strict as IntMap
-import           Prelude            hiding (seq)
-import           Data.Sequence.DNA
+import           Control.Arrow           ((&&&))
 import           Data.BitArrays.BitArray
+import           Data.Function           (on)
+import qualified Data.IntMap.Strict      as IntMap
+import           Data.Sequence.DNA
+import           Prelude                 hiding (seq)
 
 type Edge = Int
 
@@ -41,7 +41,7 @@ instance Eq b => Eq (DeBruijnGraph a b) where
 
 -- * Constructions
 -- | Create graph without edges
-emptyDeBruijn 
+emptyDeBruijn
   :: (BitArray b)
   => Base -- ^ Length of the edge.
   -> DeBruijnGraph a b -- ^ Empty de Bruijn Graph. Without any edges.

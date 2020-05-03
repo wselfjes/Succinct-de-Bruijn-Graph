@@ -1,8 +1,8 @@
 module Data.BitArrays.VectorBitArray where
 
-import qualified Data.Vector as Vec
-import           Data.BitArrays.BitArray 
-import           Data.Function      (on)
+import           Data.BitArrays.BitArray
+import           Data.Function           (on)
+import qualified Data.Vector             as Vec
 
 
 newtype VectorBitArray = VectorBitArray { getVec :: Vec.Vector Bool }
@@ -26,7 +26,7 @@ setBits' :: VectorBitArray -> [(Int, Bool)] -> VectorBitArray
 setBits' (VectorBitArray vec) listValues = VectorBitArray (vec Vec.// listValues)
 
 -- | Returns the position of the i-th occurrence of 1
-select' 
+select'
   :: VectorBitArray -- ^ Bit array
   -> Bool
   -> Int            -- ^ i-th occurrence of 1
@@ -42,7 +42,7 @@ select' (VectorBitArray bitArr') val i = (select'' bitList i 0) - 1
     bitList = Vec.toList bitArr'
 
 -- | Returns the number of elements equal to 1 up to position i
-rank' 
+rank'
   :: VectorBitArray -- ^ Bit array
   -> Bool
   -> Int            -- ^ Position i in bit Array

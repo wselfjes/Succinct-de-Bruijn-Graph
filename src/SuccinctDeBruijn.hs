@@ -1,19 +1,19 @@
 {-# LANGUAGE OverloadedStrings #-}
 module SuccinctDeBruijn where
 
+import           Data.BitArrays.SDArray
+import           Data.BitArrays.VectorBitArray
 import           Data.Fasta.String.Parse
 import           Data.Fasta.String.Types
-import           System.Environment
-import           Plotting.DeBruijnGraphPlotting
-import           Text.Read               (readMaybe)
-import           Data.Graph.DeBruijnGraph
 import           Data.Graph.Algorithms.EulerianWalk
+import           Data.Graph.DeBruijnGraph
 import           Data.Sequence.DNA
-import           Data.BitArrays.VectorBitArray
-import           Data.BitArrays.SDArray
+import           Plotting.DeBruijnGraphPlotting
+import           System.Environment
 import           System.Exit
-import           System.IO               (BufferMode (..), hSetBuffering,
-                                          stdout)
+import           System.IO                          (BufferMode (..),
+                                                     hSetBuffering, stdout)
+import           Text.Read                          (readMaybe)
 
 
 run :: IO ()
@@ -39,11 +39,11 @@ runWithArgs base fileName = do
   writeFile "data/result.txt" (show assembledSequence) `as` "Writing result"
 
 checkReads :: Base -> [DNASequence] -> IO ()
-checkReads k sequences = do 
-  if length (filter ((< k) . length . getSequence) sequences) > 0 
-  then die "Length of one of the read is less than base" 
+checkReads k sequences = do
+  if length (filter ((< k) . length . getSequence) sequences) > 0
+  then die "Length of one of the read is less than base"
   else return ()
-    
+
 as :: IO a -> String -> IO a
 command `as` name = do
   putStr (name ++ "...")

@@ -1,5 +1,5 @@
-{-# LANGUAGE DeriveGeneric   #-}
-{-# LANGUAGE InstanceSigs    #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE InstanceSigs  #-}
 module Data.Sequence.DNA where
 
 import           Data.String  (IsString (..))
@@ -29,7 +29,7 @@ type DNASequence = Sequence Nucleotide
 --  deriving (Eq, Generic)
 
 instance (Show a) => Show (Sequence a) where
-  show = concatMap show . getSequence 
+  show = concatMap show . getSequence
 
 -- |
 -- >>> fromString "ACTG" :: DNASequence
@@ -99,8 +99,8 @@ sequenceToNumber (Sequence seq) =
     base = fromEnum maxNumber + 1
 
 -- | Number to sequence
-numberToSequence 
-  :: (Enum a) 
+numberToSequence
+  :: (Enum a)
   => Int -- ^ Length of result sequences
   -> Int -- ^ Original number
   -> Sequence a -- ^ Resulting sequence

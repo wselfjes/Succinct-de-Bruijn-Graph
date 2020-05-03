@@ -10,4 +10,4 @@ class BitArray a where
   setBits       :: a -> [(Int, Bool)] -> a -- ^ Generate bit array from edges
   select        :: a -> Bool -> Int -> Int
   rank          :: a -> Bool -> Int -> Int
-  
+
