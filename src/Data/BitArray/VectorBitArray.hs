@@ -67,8 +67,9 @@ select'
   -> Int            -- ^ \(i > 0\) — occurence of value to look for.
   -> VectorBitArray
   -> Maybe Int      -- ^ Position of \(i\)-th occurrence of 1 (if exists).
+select' _ 0 = const Nothing
 select' val i
-  = elemAt i                  -- safely index of given occurenct No.
+  = elemAt (i - 1)            -- safely index of given occurenct No.
   . map fst                   -- keep only indices
   . filter ((== val) . snd)   -- filter by value
   . zip [0..]                 -- enumerate values

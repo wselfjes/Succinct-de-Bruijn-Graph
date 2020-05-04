@@ -1,8 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Data.Graph.Algorithms.EulerianWalkSpec where
 
-import           Data.BitArrays.BitArray
-import           Data.BitArrays.VectorBitArray
+import           Data.BitArray.VectorBitArray
 import           Data.Graph.Algorithms.EulerianWalk
 import           Data.Graph.DeBruijnGraph
 import           Data.Sequence.DNA

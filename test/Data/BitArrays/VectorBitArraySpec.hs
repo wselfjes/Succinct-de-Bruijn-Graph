@@ -1,7 +1,7 @@
 module Data.BitArrays.VectorBitArraySpec where
 
-import           Data.BitArrays.BitArray
-import           Data.BitArrays.VectorBitArray
+import           Data.BitArray.Class
+import           Data.BitArray.VectorBitArray
 import           Test.Hspec
 
 testSelect :: IO ()
