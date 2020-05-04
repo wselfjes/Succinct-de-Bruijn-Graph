@@ -1,7 +1,15 @@
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeFamilies        #-}
+-- |
+--
+-- These modules are intended to be imported qualified, to avoid name
+-- clashes with Prelude functions, e.g.
+--
+-- >  import qualified Data.RankSelect.Set as RSSet
 module Data.RankSelect.Set where
 
 import           Data.List             (intercalate)
+import qualified GHC.Exts              as GHC
 
 import qualified Data.BitArray.Class   as BitArray
 import           Data.BitArray.SDArray (SDArray')
@@ -11,6 +19,7 @@ import           Data.Enum.Utils
 import           Data.List.Utils
 
 -- $setup
+-- >>> :set -XOverloadedLists
 -- >>> import Data.Int (Int8)
 
 -- | 'RankSelectSet' is a set of values of type @a@
@@ -23,18 +32,27 @@ data RankSelectSet a = RankSelectSet
 
 instance (Show a, Bounded a, Enum a) => Show (RankSelectSet a) where
   show rs = intercalate " "
-    [ "fromListAscBoundedEnumN"
+    [ "fromListAscN fromBoundedEnum"
     , show (capacity rs)
     , show (size rs)
     , show (toListBoundedEnum rs)
     ]
+
+-- |
+--
+-- >>> [3, 64, -32] :: RankSelectSet Int8
+-- fromListAscN fromBoundedEnum 256 3 [-32,3,64]
+instance (Bounded a, Enum a) => GHC.IsList (RankSelectSet a) where
+  type Item (RankSelectSet a) = a
+  fromList = fromListBoundedEnum
+  toList = toListBoundedEnum
 
 -- | \(O(?)\).
 --
 -- Returns number of elements in 'RankSelectSet'
 -- that are less than or equal to a given element.
 --
--- >>> rank 45 (fromListBoundedEnum [3, 64, -32] :: RankSelectSet Int8)
+-- >>> rank 45 ([3, 64, -32] :: RankSelectSet Int8)
 -- 2
 --
 -- >>> rank 'o' (fromListBoundedEnum "world" :: RankSelectSet Char)
@@ -46,7 +64,7 @@ rank x rs = BitArray.rank (rsBitmap rs) True (fromBoundedEnum x)
 --
 -- @'select' i rs@ returns \(i\)th least element from @rs@.
 --
--- >>> select 2 (fromListBoundedEnum [3, 64, -32] :: RankSelectSet Int8)
+-- >>> select 2 ([3, 64, -32] :: RankSelectSet Int8)
 -- 3
 --
 -- >>> select 3 (fromListBoundedEnum "world" :: RankSelectSet Char)
@@ -56,14 +74,14 @@ select i rs = toBoundedEnum (BitArray.select (rsBitmap rs) True i)
 
 -- | Capacity of 'RankSelectSet' (maximum possible number of elements).
 --
--- >>> capacity (fromListBoundedEnum [2, 3, 5, 7] :: RankSelectSet Int8)
+-- >>> capacity ([2, 3, 5, 7] :: RankSelectSet Int8)
 -- 256
 capacity :: RankSelectSet a -> Int
 capacity = SDArray.bitVectorSize . rsBitmap
 
 -- | Number of elements in the set.
 --
--- >>> size (fromListBoundedEnum [2, 3, 5, 7] :: RankSelectSet Int8)
+-- >>> size ([2, 3, 5, 7] :: RankSelectSet Int8)
 -- 4
 size :: RankSelectSet a -> Int
 size = length . SDArray.lowerBits . rsBitmap
