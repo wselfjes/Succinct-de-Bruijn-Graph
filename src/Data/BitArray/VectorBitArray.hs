@@ -25,6 +25,7 @@ instance BitArray VectorBitArray where
   setBits            = flip setBits'
   select arr q i     = fromMaybe (-1) (select' q i arr)
   rank arr q i       = rank' q i arr
+  getBit i arr       = getVec arr V.! i
 
 instance Show VectorBitArray where
   show = foldMap (\bit -> if bit then "1" else "0") . getVec

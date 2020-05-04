@@ -2,7 +2,6 @@
 module SuccinctDeBruijn where
 
 import           Data.BitArray.SDArray
-import           Data.BitArray.VectorBitArray
 import           Data.Fasta.String.Parse
 import           Data.Fasta.String.Types
 import           Data.Graph.Algorithms.EulerianWalk
@@ -32,7 +31,7 @@ runWithArgs base fileName = do
   let readsString = (map fastaSeq parsedFasta)
   let readsDNASequences = map unsafeParseDNASequence readsString
   checkReads base readsDNASequences `as` "Checking reads"
-  let rawDeBruijnGraph = fromSequences base readsDNASequences :: DeBruijnGraph Nucleotide SDArray
+  let rawDeBruijnGraph = fromSequences base readsDNASequences :: DeBruijnGraph Nucleotide SDArray'
   drawGraph rawDeBruijnGraph `as` "Drawing deBruijnGraph"
   let deBruijnGraph = preprocess rawDeBruijnGraph
   let assembledSequence = assemblyDeBruijnUsingEulerianWalk deBruijnGraph

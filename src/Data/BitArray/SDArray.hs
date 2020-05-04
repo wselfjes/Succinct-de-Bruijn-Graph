@@ -10,32 +10,37 @@ import qualified Data.IntMap                  as IntMap
 import qualified Data.Vector                  as Vec
 
 -- |
-data SDArray = SDArray
+data SDArray darray = SDArray
   { lowerBits     :: Vec.Vector Int
-  , upperBits     :: VectorBitArray
+  , upperBits     :: darray
   , ones          :: [Int]
   , bitVectorSize :: BitArraySize
   }
 
-instance BitArray SDArray where
+type SDArray' = SDArray VectorBitArray
+
+instance BitArray darray => BitArray (SDArray darray) where
   generateEmpty = sdarrayGenerateEmpty
   setBits       = sdarraySetBits
   select        = sdarraySelect
   rank          = sdarrayRank
 
+  -- TODO: efficient getBit implementation?
 
 sdarrayGenerateEmpty
-  :: BitArraySize
-  -> SDArray
+  :: BitArray darray
+  => BitArraySize
+  -> SDArray darray
 sdarrayGenerateEmpty _ = SDArray
                               { lowerBits = Vec.generate 0 (const 0)
                               , upperBits = generateEmpty 0
                               , ones = [] , bitVectorSize = 0}
 
 sdarraySetBits
-  :: SDArray
+  :: BitArray darray
+  => SDArray darray
   -> [(Int, Bool)]
-  -> SDArray
+  -> SDArray darray
 sdarraySetBits sdarray elems = fromOnes newOnes
   where
     intMapOnes = IntMap.fromList (zip (ones sdarray) (repeat True))
@@ -44,8 +49,9 @@ sdarraySetBits sdarray elems = fromOnes newOnes
     newOnes = map (fst) (filter (snd) (IntMap.toList newOnesMap))
 
 fromOnes
-  :: [Int]
-  -> SDArray
+  :: BitArray darray
+  => [Int]
+  -> SDArray darray
 fromOnes onesPos = SDArray
                         { lowerBits     = newLowerBits
                         , upperBits     = newUpperBits
@@ -75,7 +81,8 @@ getLowerBits
 getLowerBits offset value = value - ((getUpperBits offset value) * 2 ^ (fromIntegral offset))
 
 sdarraySelect
-  :: SDArray
+  :: BitArray darray
+  => SDArray darray
   -> Bool
   -> Int
   -> Int
@@ -86,7 +93,8 @@ sdarraySelect (SDArray lwBits upBits onesPos size) _ pos = ((select upBits True 
     w = ceiling (logBase 2 (n / m))
 
 sdarrayRank
-  :: SDArray
+  :: BitArray darray
+  => SDArray darray
   -> Bool
   -> Int
   -> Int
@@ -99,7 +107,7 @@ sdarrayRank (SDArray lwBits upBits onesPos size) _ pos = getPos y' x'
     x' = y' - (getUpperBits w pos)
     j = getLowerBits w pos
     getPos y x
-      | not ((getVec upBits) Vec.! y) = x
+      | not (getBit y upBits) = x
       | lwBits Vec.! x >= j = if lwBits Vec.! x == j then x + 1 else x
       | otherwise = getPos (y + 1) (x + 1)
 
