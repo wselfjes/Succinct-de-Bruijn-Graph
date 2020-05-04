@@ -13,8 +13,8 @@ import qualified Data.Vector                  as Vec
 data SDArray darray = SDArray
   { lowerBits     :: Vec.Vector Int
   , upperBits     :: darray
-  , ones          :: [Int]
   , bitVectorSize :: BitArraySize
+  , countOnes     :: Int
   }
 
 type SDArray' = SDArray VectorBitArray
@@ -32,10 +32,15 @@ sdarrayGenerateEmpty
   => BitArraySize
   -> SDArray darray
 sdarrayGenerateEmpty _ = SDArray
-                              { lowerBits = Vec.generate 0 (const 0)
-                              , upperBits = generateEmpty 0
-                              , ones = [] , bitVectorSize = 0}
+  { lowerBits = Vec.generate 0 (const 0)
+  , upperBits = generateEmpty 0
+  , bitVectorSize = 0
+  , countOnes = 0
+  }
 
+-- |
+--
+-- NOTE: this method reconstructs 'SDArray' from scratch.
 sdarraySetBits
   :: BitArray darray
   => SDArray darray
@@ -43,28 +48,36 @@ sdarraySetBits
   -> SDArray darray
 sdarraySetBits sdarray elems = fromOnes newOnes
   where
-    intMapOnes = IntMap.fromList (zip (ones sdarray) (repeat True))
+    intMapOnes = IntMap.fromList (zip (toOnes sdarray) (repeat True))
     intMapElems = IntMap.fromList elems
     newOnesMap = intMapElems `IntMap.union` intMapOnes
     newOnes = map (fst) (filter (snd) (IntMap.toList newOnesMap))
 
+toOnes :: BitArray darray => SDArray darray -> [Int]
+toOnes arr = map (select arr True) [0..m-1]
+  where
+    m = countOnes arr
+
 fromOnes
   :: BitArray darray
-  => [Int]
+  => [Int]              -- ^ Indices of 1s in a bit-array.
   -> SDArray darray
 fromOnes onesPos = SDArray
-                        { lowerBits     = newLowerBits
-                        , upperBits     = newUpperBits
-                        , ones          = onesPos
-                        , bitVectorSize = ceiling n
-                        }
+  { lowerBits     = newLowerBits
+  , upperBits     = newUpperBits
+  , bitVectorSize = ceiling n
+  , countOnes     = 0
+  }
   where
     m = fromIntegral (length onesPos) :: Float
     n = fromIntegral (onesPos !! (ceiling (m - 1))) :: Float
     offsetLowerBit = ceiling (logBase 2 (n / m))
+
     lowerBitsList = map (getLowerBits offsetLowerBit) onesPos
     upperBitsList = map (getUpperBits offsetLowerBit) onesPos
+
     upperBitsPos = zip (map (uncurry (+)) (zip [0..] upperBitsList)) (repeat True)
+
     newUpperBits = generateEmpty (2 * (ceiling m)) `setBits` upperBitsPos
     newLowerBits = Vec.fromList lowerBitsList
 
@@ -86,9 +99,9 @@ sdarraySelect
   -> Bool
   -> Int
   -> Int
-sdarraySelect (SDArray lwBits upBits onesPos size) _ pos = ((select upBits True pos) - (pos - 1)) * 2 ^ w + (lwBits Vec.! (pos - 1))
+sdarraySelect (SDArray lwBits upBits size cOnes) _ pos = ((select upBits True pos) - (pos - 1)) * 2 ^ w + (lwBits Vec.! (pos - 1))
   where
-    m = fromIntegral (length onesPos) :: Float
+    m = fromIntegral cOnes :: Float
     n = fromIntegral size :: Float
     w = ceiling (logBase 2 (n / m))
 
@@ -98,9 +111,9 @@ sdarrayRank
   -> Bool
   -> Int
   -> Int
-sdarrayRank (SDArray lwBits upBits onesPos size) _ pos = getPos y' x'
+sdarrayRank (SDArray lwBits upBits size cOnes) _ pos = getPos y' x'
   where
-    m = fromIntegral (length onesPos) :: Float
+    m = fromIntegral cOnes :: Float
     n = fromIntegral size :: Float
     w = ceiling (logBase 2 (n / m))
     y' = (select (upBits) False (getUpperBits w pos)) + 1
