@@ -11,11 +11,13 @@ import qualified Data.Vector                  as Vec
 
 -- |
 data SDArray darray = SDArray
-  { lowerBits     :: Vec.Vector Int
+  { lowerBits     :: Vec.Vector Int -- TODO: replace Int with [log n / m] bits
   , upperBits     :: darray
   , bitVectorSize :: BitArraySize
-  , countOnes     :: Int
   }
+
+countOnes :: SDArray darray -> Int
+countOnes = length . lowerBits
 
 type SDArray' = SDArray VectorBitArray
 
@@ -36,7 +38,6 @@ sdarrayGenerateEmpty _ = SDArray
   { lowerBits = Vec.generate 0 (const 0)
   , upperBits = generateEmpty 0
   , bitVectorSize = 0
-  , countOnes = 0
   }
 
 -- |
@@ -70,7 +71,6 @@ sdarrayFromOnes n m onesPos = SDArray
   { lowerBits     = newLowerBits
   , upperBits     = newUpperBits
   , bitVectorSize = n
-  , countOnes     = 0
   }
   where
     offsetLowerBit = ceiling (logBase 2 (fromIntegral n / fromIntegral m))
@@ -81,7 +81,6 @@ sdarrayFromOnes n m onesPos = SDArray
     upperBitsList = map (getUpperBits offsetLowerBit) onesPos
     upperBitsPos = zipWith (+) [0..] upperBitsList
     newUpperBits = fromOnes (2 * m) m upperBitsPos
-
 
 getUpperBits
   :: Int
@@ -101,9 +100,9 @@ sdarraySelect
   -> Bool
   -> Int
   -> Int
-sdarraySelect (SDArray lwBits upBits size cOnes) _ pos = ((select upBits True pos) - (pos - 1)) * 2 ^ w + (lwBits Vec.! (pos - 1))
+sdarraySelect sdarray@(SDArray lwBits upBits size) _ pos = ((select upBits True pos) - (pos - 1)) * 2 ^ w + (lwBits Vec.! (pos - 1))
   where
-    m = fromIntegral cOnes :: Float
+    m = fromIntegral (countOnes sdarray) :: Float
     n = fromIntegral size :: Float
     w = ceiling (logBase 2 (n / m))
 
@@ -113,9 +112,9 @@ sdarrayRank
   -> Bool
   -> Int
   -> Int
-sdarrayRank (SDArray lwBits upBits size cOnes) _ pos = getPos y' x'
+sdarrayRank sdarray@(SDArray lwBits upBits size) _ pos = getPos y' x'
   where
-    m = fromIntegral cOnes :: Float
+    m = fromIntegral (countOnes sdarray) :: Float
     n = fromIntegral size :: Float
     w = ceiling (logBase 2 (n / m))
     y' = (select (upBits) False (getUpperBits w pos)) + 1
