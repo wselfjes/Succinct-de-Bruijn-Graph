@@ -24,6 +24,7 @@ instance BitArray darray => BitArray (SDArray darray) where
   setBits       = sdarraySetBits
   select        = sdarraySelect
   rank          = sdarrayRank
+  fromOnes      = sdarrayFromOnes
 
   -- TODO: efficient getBit implementation?
 
@@ -46,7 +47,8 @@ sdarraySetBits
   => SDArray darray
   -> [(Int, Bool)]
   -> SDArray darray
-sdarraySetBits sdarray elems = fromOnes (bitVectorSize sdarray) (Vec.fromList newOnes)
+sdarraySetBits sdarray elems = fromOnes
+  (bitVectorSize sdarray) (countOnes sdarray) newOnes
   where
     intMapOnes = IntMap.fromList (zip (toOnes sdarray) (repeat True))
     intMapElems = IntMap.fromList elems
@@ -58,31 +60,28 @@ toOnes arr = map (select arr True) [0..m-1]
   where
     m = countOnes arr
 
-fromOnes
+sdarrayFromOnes
   :: BitArray darray
   => BitArraySize
-  -> Vec.Vector Int   -- ^ Indices of 1s in a bit-array.
+  -> Int
+  -> [Int]            -- ^ Indices of 1s in a bit-array.
   -> SDArray darray
-fromOnes n' vOnes = SDArray
+sdarrayFromOnes n m onesPos = SDArray
   { lowerBits     = newLowerBits
   , upperBits     = newUpperBits
-  , bitVectorSize = n'
+  , bitVectorSize = n
   , countOnes     = 0
   }
   where
-    m = fromIntegral (length vOnes) :: Float
-    n = fromIntegral n' :: Float
-    offsetLowerBit = ceiling (logBase 2 (n / m))
-
-    onesPos = Vec.toList vOnes
+    offsetLowerBit = ceiling (logBase 2 (fromIntegral n / fromIntegral m))
 
     lowerBitsList = map (getLowerBits offsetLowerBit) onesPos
-    upperBitsList = map (getUpperBits offsetLowerBit) onesPos
-
-    upperBitsPos = zip (map (uncurry (+)) (zip [0..] upperBitsList)) (repeat True)
-
-    newUpperBits = generateEmpty (2 * (ceiling m)) `setBits` upperBitsPos
     newLowerBits = Vec.fromList lowerBitsList
+
+    upperBitsList = map (getUpperBits offsetLowerBit) onesPos
+    upperBitsPos = zipWith (+) [0..] upperBitsList
+    newUpperBits = fromOnes (2 * m) m upperBitsPos
+
 
 getUpperBits
   :: Int
