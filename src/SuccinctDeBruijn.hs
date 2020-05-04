@@ -1,8 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 module SuccinctDeBruijn where
 
-import           Data.BitArrays.SDArray
-import           Data.BitArrays.VectorBitArray
+import           Data.BitArray.SDArray
+import           Data.BitArray.VectorBitArray
 import           Data.Fasta.String.Parse
 import           Data.Fasta.String.Types
 import           Data.Graph.Algorithms.EulerianWalk

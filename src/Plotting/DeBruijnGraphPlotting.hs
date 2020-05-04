@@ -1,6 +1,6 @@
 module Plotting.DeBruijnGraphPlotting where
 
-import           Data.BitArrays.BitArray
+import           Data.BitArray.Class
 import           Data.Graph.DeBruijnGraph
 import qualified Data.GraphViz                     as G
 import qualified Data.GraphViz.Attributes.Complete as G

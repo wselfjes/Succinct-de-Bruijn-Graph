@@ -1,9 +1,9 @@
 module Data.Graph.Algorithms.EulerianWalk where
 
-import           Data.BitArrays.BitArray
-import           Data.Sequence.DNA
+import           Data.BitArray.Class
 import           Data.Graph.DeBruijnGraph
-import qualified Data.Set           as Set
+import           Data.Sequence.DNA
+import qualified Data.Set                 as Set
 
 -- |
 eulerBackTracking
@@ -132,7 +132,7 @@ selectEndNode l = endNode
 --    multipliedVec' = multipliedVec deBruijnGraph
 
 -- | Successor edges of node
-successorEdges 
+successorEdges
   :: (BitArray b)
   => b -- ^ Bit array
   -> Node -- ^ Node

@@ -1,11 +1,15 @@
-module Data.BitArrays.SDArray where
+-- |
+--
+-- This is an implementation of a succinct bit array
+-- based on the paper [Practical Entropy-Compressed Rank/Select Dictionary](https://arxiv.org/abs/cs/0610001) by Daisuke Okanohara and Kunihiko Sadakane.
+module Data.BitArray.SDArray where
 
-import           Data.BitArrays.BitArray
-import           Data.BitArrays.VectorBitArray
-import qualified Data.IntMap                   as IntMap
-import qualified Data.Vector                   as Vec
+import           Data.BitArray.Class
+import           Data.BitArray.VectorBitArray
+import qualified Data.IntMap                  as IntMap
+import qualified Data.Vector                  as Vec
 
-
+-- |
 data SDArray = SDArray
   { lowerBits     :: Vec.Vector Int
   , upperBits     :: VectorBitArray
@@ -75,7 +79,7 @@ sdarraySelect
   -> Bool
   -> Int
   -> Int
-sdarraySelect (SDArray lwBits upBits onesPos size) _ pos = ((select' upBits True pos) - (pos - 1)) * 2 ^ w + (lwBits Vec.! (pos - 1))
+sdarraySelect (SDArray lwBits upBits onesPos size) _ pos = ((select upBits True pos) - (pos - 1)) * 2 ^ w + (lwBits Vec.! (pos - 1))
   where
     m = fromIntegral (length onesPos) :: Float
     n = fromIntegral size :: Float
@@ -91,7 +95,7 @@ sdarrayRank (SDArray lwBits upBits onesPos size) _ pos = getPos y' x'
     m = fromIntegral (length onesPos) :: Float
     n = fromIntegral size :: Float
     w = ceiling (logBase 2 (n / m))
-    y' = (select' (upBits) False (getUpperBits w pos)) + 1
+    y' = (select (upBits) False (getUpperBits w pos)) + 1
     x' = y' - (getUpperBits w pos)
     j = getLowerBits w pos
     getPos y x

@@ -1,8 +1,6 @@
-module Data.BitArrays.BitArray where
-
+module Data.BitArray.Class where
 
 type BitArraySize = Int
-
 
 -- | Class for represent Bit Array, may be implicit bit array such as Vector Bool, or explicit like sdarrays
 class BitArray a where

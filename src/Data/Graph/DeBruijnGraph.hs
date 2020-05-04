@@ -1,12 +1,12 @@
 {-# LANGUAGE GADTs #-}
 module Data.Graph.DeBruijnGraph where
 
-import           Control.Arrow           ((&&&))
-import           Data.BitArrays.BitArray
-import           Data.Function           (on)
-import qualified Data.IntMap.Strict      as IntMap
+import           Control.Arrow       ((&&&))
+import           Data.BitArray.Class
+import           Data.Function       (on)
+import qualified Data.IntMap.Strict  as IntMap
 import           Data.Sequence.DNA
-import           Prelude                 hiding (seq)
+import           Prelude             hiding (seq)
 
 type Edge = Int
 

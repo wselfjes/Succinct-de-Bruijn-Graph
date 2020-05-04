@@ -4,7 +4,7 @@ cabal-version: 1.24
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: fa1df75004e712899f5bd45ad6c8a76a3a2542e9863bc41c74820ed7858cf387
+-- hash: b1dc3ad94c9858d063e9c0317dd6a7ae94f41ba9c493ddd500e98bded1808eaa
 
 name:           SuccinctDeBruijnGraph
 version:        0.1.0.0
@@ -29,9 +29,9 @@ custom-setup
 
 library
   exposed-modules:
-      Data.BitArrays.BitArray
-      Data.BitArrays.SDArray
-      Data.BitArrays.VectorBitArray
+      Data.BitArray.Class
+      Data.BitArray.SDArray
+      Data.BitArray.VectorBitArray
       Data.Graph.Algorithms.EulerianWalk
       Data.Graph.DeBruijnGraph
       Data.Sequence.DNA
