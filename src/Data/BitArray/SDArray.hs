@@ -9,6 +9,10 @@ import           Data.BitArray.VectorBitArray
 import qualified Data.IntMap                  as IntMap
 import qualified Data.Vector                  as Vec
 
+import           Data.Bits                    (Bits (shiftR, (.&.)),
+                                               FiniteBits (finiteBitSize))
+import qualified Data.Bits                    as Bits
+
 -- |
 data SDArray darray = SDArray
   { lowerBits     :: Vec.Vector Int -- TODO: replace Int with [log n / m] bits
@@ -82,17 +86,20 @@ sdarrayFromOnes n m onesPos = SDArray
     upperBitsPos = zipWith (+) [0..] upperBitsList
     newUpperBits = fromOnes (2 * m) m upperBitsPos
 
-getUpperBits
-  :: Int
-  -> Int
-  -> Int
-getUpperBits skipNumber value = floor ((fromIntegral value) / (2 ^ (fromIntegral skipNumber)))
+-- |
+-- >>> getUpperBits 5 127
+-- 3
+getUpperBits :: Bits a => Int -> a -> a
+getUpperBits skipNumber value = value `shiftR` skipNumber
 
-getLowerBits
-  :: Int
-  -> Int
-  -> Int
-getLowerBits offset value = value - ((getUpperBits offset value) * 2 ^ (fromIntegral offset))
+-- |
+-- >>> getLowerBits 5 127 :: Int
+-- 31
+getLowerBits :: FiniteBits a => Int -> a -> a
+getLowerBits offset value = value .&. (ones `shiftR` (n - offset))
+  where
+    n = finiteBitSize ones
+    ones = Bits.complement Bits.zeroBits
 
 sdarraySelect
   :: BitArray darray
