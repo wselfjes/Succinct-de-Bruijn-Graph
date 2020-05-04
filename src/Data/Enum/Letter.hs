@@ -15,6 +15,9 @@ import           GHC.TypeLits
 newtype Letter (alphabet :: Symbol) = Letter { getLetter :: Char }
   deriving (Eq, Ord, Show)
 
+unsafeLetters :: forall alphabet. KnownSymbol alphabet => String -> [Letter alphabet]
+unsafeLetters = map unsafeLetter
+
 unsafeLetter :: forall alphabet. KnownSymbol alphabet => Char -> Letter alphabet
 unsafeLetter c
   | c `notElem` alphabet = error $

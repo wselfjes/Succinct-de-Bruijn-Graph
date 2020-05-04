@@ -4,7 +4,7 @@ cabal-version: 1.24
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: e0bd2eb54139ff1714b88643911c4bfabfe55a7cc0ed3e31160f941a0e99d278
+-- hash: 9972a9197c7c9a150d1ecd5fe28e7166ffc4b740c1dc2f8ae64c736e86339c30
 
 name:           SuccinctDeBruijnGraph
 version:        0.1.0.0
@@ -32,6 +32,7 @@ library
       Data.BitArray.Class
       Data.BitArray.SDArray
       Data.BitArray.VectorBitArray
+      Data.DNA.Assembly
       Data.Enum.FixedList
       Data.Enum.Letter
       Data.Enum.Utils
