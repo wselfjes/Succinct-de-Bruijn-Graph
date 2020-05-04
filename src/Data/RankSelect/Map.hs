@@ -58,7 +58,7 @@ instance (Bounded k, Enum k) => GHC.IsList (RankSelectMap k v) where
 -- | \(O(?)\).
 --
 -- Returns number of keys in 'RankSelectMap'
--- that are less than or equal to k given key.
+-- that are less than or equal to a given key.
 --
 -- >>> rank 45 ([(3, 'a'), (64, 'b'), (-32, 'c')] :: RankSelectMap Int8 Char)
 -- 2
@@ -74,6 +74,28 @@ rank x rs = BitArray.rank (rsBitmap rs) True (fromBoundedEnum x)
 -- (3,'a')
 select :: (Bounded k, Enum k) => Int -> RankSelectMap k v -> (k, v)
 select i rs = (toBoundedEnum k, rsValues rs Vector.! (i - 1))
+  where
+    k = BitArray.select (rsBitmap rs) True i
+
+-- | \(O(?)\).
+--
+-- Returns number of keys in 'RankSelectMap'
+-- that are less than or equal to a given key (converted to 'Int').
+--
+-- >>> rankEnum (127 + 45) ([(3, 'a'), (64, 'b'), (-32, 'c')] :: RankSelectMap Int8 Char)
+-- 2
+rankEnum :: Int -> RankSelectMap k v -> Int
+rankEnum k rs = BitArray.rank (rsBitmap rs) True k
+
+-- | \(O(?)\).
+--
+-- @'select' i rs@ returns \(i\)th least key (as 'Int') from @rs@
+-- along with its associated value.
+--
+-- >>> select 2 ([(3, 'a'), (64, 'b'), (-32, 'c')] :: RankSelectMap Int8 Char)
+-- (128,'a')
+selectEnum :: (Bounded k, Enum k) => Int -> RankSelectMap k v -> (Int, v)
+selectEnum i rs = (k, rsValues rs Vector.! (i - 1))
   where
     k = BitArray.select (rsBitmap rs) True i
 
