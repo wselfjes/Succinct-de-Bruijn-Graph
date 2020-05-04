@@ -110,6 +110,27 @@ toListEnum = toList toEnum
 toListBoundedEnum :: (Bounded k, Enum k) => RankSelectMap k v -> [(k, v)]
 toListBoundedEnum = toList toBoundedEnum
 
+-- ** Convert enumerations of elements to 'RankSelectSet'
+
+fromEnumList :: Int -> [(Int, v)] -> RankSelectMap k v
+fromEnumList = fromEnumListWith const
+
+fromEnumListWith :: (v -> v -> v) -> Int -> [(Int, v)] -> RankSelectMap k v
+fromEnumListWith combine n = fromEnumListAsc n . nubSortOnWith combine' fst
+  where
+    combine' (k, v) (_, v') = (k, v `combine` v')
+
+fromEnumListAsc :: Int -> [(Int, v)] -> RankSelectMap k v
+fromEnumListAsc n kvs = fromEnumListAscN n (length kvs) kvs
+
+fromEnumListAscN :: Int -> Int -> [(Int, v)] -> RankSelectMap k v
+fromEnumListAscN n m kvs
+  | n < m = error $ "this RankSelectMap cannot contain more than " <> show n <> " elements"
+  | otherwise = RankSelectMap
+    { rsBitmap = BitArray.fromOnes n m (map fst kvs)
+    , rsValues = Vector.fromList (map snd kvs)
+    }
+
 -- ** Convert an arbitrary list to 'RankSelectMap'
 
 fromList :: (k -> Int) -> Int -> [(k, v)] -> RankSelectMap k v

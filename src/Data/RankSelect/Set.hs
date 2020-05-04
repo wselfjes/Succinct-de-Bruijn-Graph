@@ -99,6 +99,20 @@ toListEnum = toList toEnum
 toListBoundedEnum :: forall a. (Bounded a, Enum a) => RankSelectSet a -> [a]
 toListBoundedEnum = toList toBoundedEnum
 
+-- ** Convert enumerations of elements to 'RankSelectSet'
+
+fromEnumList :: Int -> [Int] -> RankSelectSet a
+fromEnumList n = fromEnumListAsc n . nubSort
+
+fromEnumListN :: Int -> Int -> [Int] -> RankSelectSet a
+fromEnumListN n m = fromEnumListAscN n m . nubSort
+
+fromEnumListAsc :: Int -> [Int] -> RankSelectSet a
+fromEnumListAsc n xs = fromEnumListAscN n (length xs) xs
+
+fromEnumListAscN :: Int -> Int -> [Int] -> RankSelectSet a
+fromEnumListAscN n m = RankSelectSet . BitArray.fromOnes n m
+
 -- ** Convert an arbitrary list to 'RankSelectSet'
 
 -- | Construct 'RankSelectSet' of given capacity from an arbitrary list.

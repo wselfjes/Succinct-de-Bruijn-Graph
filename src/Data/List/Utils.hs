@@ -3,6 +3,16 @@ module Data.List.Utils where
 import           Data.Function (on)
 import           Data.List     (sortBy, tails)
 
+-- | /O(n log n)/. The 'nubSort' function sorts and removes duplicate elements from a list.
+-- In particular, it keeps only the first occurrence of each element.
+--
+-- > nubSort "this is a test" == " aehist"
+-- > \xs -> nubSort xs == nub (sort xs)
+--
+-- From https://hackage.haskell.org/package/extra
+nubSort :: Ord a => [a] -> [a]
+nubSort = nubSortBy compare
+
 -- | A version of 'nubSort' which operates on a portion of the value.
 --
 -- > nubSortOn length ["a","test","of","this"] == ["a","of","test"]
