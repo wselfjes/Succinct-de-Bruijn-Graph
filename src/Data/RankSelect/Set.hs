@@ -13,10 +13,13 @@ import           Data.List.Utils
 -- $setup
 -- >>> import Data.Int (Int8)
 
--- | 'RankSelect' is a set of values of type @a@
+-- | 'RankSelectSet' is a set of values of type @a@
 -- that supports efficient 'rank' and 'select' operations.
+--
+-- Many operations on 'RankSelectSet' rely on keys being 'Enum' and 'Bounded'.
 data RankSelectSet a = RankSelectSet
   { rsBitmap :: SDArray' }
+  deriving (Eq)
 
 instance (Show a, Bounded a, Enum a) => Show (RankSelectSet a) where
   show rs = intercalate " "
@@ -28,7 +31,7 @@ instance (Show a, Bounded a, Enum a) => Show (RankSelectSet a) where
 
 -- | \(O(?)\).
 --
--- Returns number of elements in 'RankSelect'
+-- Returns number of elements in 'RankSelectSet'
 -- that are less than or equal to a given element.
 --
 -- >>> rank 45 (fromListBoundedEnum [3, 64, -32] :: RankSelectSet Int8)
@@ -45,20 +48,29 @@ rank x rs = BitArray.rank (rsBitmap rs) True (fromBoundedEnum x)
 --
 -- >>> select 2 (fromListBoundedEnum [3, 64, -32] :: RankSelectSet Int8)
 -- 3
+--
 -- >>> select 3 (fromListBoundedEnum "world" :: RankSelectSet Char)
 -- 'o'
 select :: (Bounded a, Enum a) => Int -> RankSelectSet a -> a
 select i rs = toBoundedEnum (BitArray.select (rsBitmap rs) True i)
 
+-- | Capacity of 'RankSelectSet' (maximum possible number of elements).
+--
+-- >>> capacity (fromListBoundedEnum [2, 3, 5, 7] :: RankSelectSet Int8)
+-- 256
 capacity :: RankSelectSet a -> Int
 capacity = SDArray.bitVectorSize . rsBitmap
 
+-- | Number of elements in the set.
+--
+-- >>> size (fromListBoundedEnum [2, 3, 5, 7] :: RankSelectSet Int8)
+-- 4
 size :: RankSelectSet a -> Int
 size = length . SDArray.lowerBits . rsBitmap
 
 -- * Conversion to and from lists
 
--- ** Convert 'RankSelect' to list
+-- ** Convert 'RankSelectSet' to list
 
 toList :: (Int -> a) -> RankSelectSet a -> [a]
 toList fromInt = map fromInt . SDArray.toOnes . rsBitmap
@@ -69,9 +81,9 @@ toListEnum = toList toEnum
 toListBoundedEnum :: forall a. (Bounded a, Enum a) => RankSelectSet a -> [a]
 toListBoundedEnum = toList toBoundedEnum
 
--- ** Convert an arbitrary list to 'RankSelect'
+-- ** Convert an arbitrary list to 'RankSelectSet'
 
--- | Construct 'RankSelect' of given capacity from an arbitrary list.
+-- | Construct 'RankSelectSet' of given capacity from an arbitrary list.
 --
 -- Duplicate values in input list are ignored.
 fromList :: (a -> Int) -> Int -> [a] -> RankSelectSet a
@@ -83,7 +95,7 @@ fromListEnum = fromList fromEnum
 fromListBoundedEnum :: (Bounded a, Enum a) => [a] -> RankSelectSet a
 fromListBoundedEnum = fromListAscBoundedEnum . nubSortOn fromBoundedEnum
 
--- ** Convert an ordered list to 'RankSelect'
+-- ** Convert an ordered list to 'RankSelectSet'
 
 fromListAscN
   :: (a -> Int)

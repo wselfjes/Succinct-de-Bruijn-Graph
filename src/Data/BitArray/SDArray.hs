@@ -1,3 +1,4 @@
+{-# LANGUAGE RecordWildCards #-}
 -- |
 --
 -- This is an implementation of a succinct bit array
@@ -15,11 +16,11 @@ import qualified Data.Bits                    as Bits
 
 -- |
 data SDArray darray = SDArray
-  { lowerBits     :: Vec.Vector Int -- TODO: replace Int with [log n / m] bits
-  , upperBits     :: darray
+  { bitsOffset    :: Int
   , bitVectorSize :: BitArraySize
-  , bitsOffset    :: Int
-  }
+  , upperBits     :: darray
+  , lowerBits     :: Vec.Vector Int -- TODO: replace Int with [log n / m] bits
+  } deriving (Eq)
 
 countOnes :: SDArray darray -> Int
 countOnes = length . lowerBits
@@ -111,8 +112,8 @@ sdarraySelect
   -> Int
   -> Int
 sdarraySelect _ False _ = error "select for SDArray is not implemented (for 0)"
-sdarraySelect (SDArray lwBits upBits _ w) True pos =
-  ((select upBits True pos - (pos - 1)) `shiftL` w) .|. lwBits Vec.! (pos - 1)
+sdarraySelect SDArray{..} True pos =
+  ((select upperBits True pos - (pos - 1)) `shiftL` bitsOffset) .|. lowerBits Vec.! (pos - 1)
 
 sdarrayRank
   :: BitArray darray
@@ -121,15 +122,15 @@ sdarrayRank
   -> Int
   -> Int
 sdarrayRank _ False _ = error "rank for SDArray is not implemented (for 0)"
-sdarrayRank (SDArray lwBits upBits _ w) True pos = getPos y' x'
+sdarrayRank SDArray{..} True pos = getPos y' x'
   where
-    upBit = getUpperBits w pos
-    y' = 1 + select upBits False upBit
+    upBit = getUpperBits bitsOffset pos
+    y' = 1 + select upperBits False upBit
     x' = y' - upBit
-    j = getLowerBits w pos
+    j = getLowerBits bitsOffset pos
 
     getPos y x
-      | not (getBit y upBits) = x
-      | lwBits Vec.! x >= j = if lwBits Vec.! x == j then x + 1 else x
+      | not (getBit y upperBits) = x
+      | lowerBits Vec.! x >= j = if lowerBits Vec.! x == j then x + 1 else x
       | otherwise = getPos (y + 1) (x + 1)
 
