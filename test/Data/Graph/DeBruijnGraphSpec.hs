@@ -1,13 +1,12 @@
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Data.Graph.DeBruijnGraphSpec where
 
-import           Test.Hspec
+import           Data.BitArray.VectorBitArray
+import           Data.Graph.Algorithms.EulerianWalk
 import           Data.Graph.DeBruijnGraph
 import           Data.Sequence.DNA
-import           Data.BitArrays.VectorBitArray 
-import           Data.BitArrays.BitArray
-import           Data.BitArrays.SDArray
-import           Data.Graph.Algorithms.EulerianWalk
+import           Test.Hspec
 
 dnaSequences :: [DNASequence]
 dnaSequences = ["TT", "TC", "CG", "GG", "GA", "AA", "AG"]

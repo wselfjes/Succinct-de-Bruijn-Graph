@@ -1,8 +1,8 @@
 module Data.BitArrays.VectorBitArraySpec where
 
+import           Data.BitArray.Class
+import           Data.BitArray.VectorBitArray
 import           Test.Hspec
-import           Data.BitArrays.VectorBitArray
-import           Data.BitArrays.BitArray
 
 testSelect :: IO ()
 testSelect = s `shouldBe` 1

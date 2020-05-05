@@ -2,9 +2,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Data.Sequence.DNASpec where
 
+import           Data.Sequence.DNA
 import           Test.Hspec
 import           Test.QuickCheck
-import           Data.Sequence.DNA
 
 
 instance Arbitrary Nucleotide where

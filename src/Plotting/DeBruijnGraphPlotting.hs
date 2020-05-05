@@ -1,13 +1,13 @@
 module Plotting.DeBruijnGraphPlotting where
 
+import           Data.BitArray.Class
 import           Data.Graph.DeBruijnGraph
-import           Data.Sequence.DNA
-import           Data.BitArrays.BitArray
-import qualified Data.GraphViz as G
+import qualified Data.GraphViz                     as G
 import qualified Data.GraphViz.Attributes.Complete as G
-import           Data.List.Unique 
-import qualified Data.Text.Lazy as TL
-import qualified Data.Text.Lazy.IO as TL
+import           Data.List.Unique
+import           Data.Sequence.DNA
+import qualified Data.Text.Lazy                    as TL
+import qualified Data.Text.Lazy.IO                 as TL
 
 data NLabel = RegularNode
   deriving (Eq)
@@ -17,7 +17,7 @@ type NodeGraph a = (a, NLabel)
 type EdgeGraph a = (a, a, ELabel)
 
 
-toNodeEdgeList 
+toNodeEdgeList
   :: (BitArray b)
   => DeBruijnGraph Nucleotide b
   -> ([NodeGraph String], [EdgeGraph String])
@@ -40,13 +40,13 @@ deBruijnGraphParams :: G.GraphvizParams String NLabel ELabel () NLabel
 deBruijnGraphParams = G.defaultParams {
   G.fmtNode = const $ colorAttribute $ G.RGB 0 0 0,
   G.fmtEdge = const $ colorAttribute $ G.RGB 0 0 0
-      }  
+      }
   where
     colorAttribute color = [ G.Color $ G.toColorList [ color ] ]
-    
-drawGraph 
+
+drawGraph
   :: (BitArray b)
-  => DeBruijnGraph Nucleotide b 
+  => DeBruijnGraph Nucleotide b
   -> IO ()
 drawGraph deBruijnGraph = do
   let (vs, es) = toNodeEdgeList deBruijnGraph
