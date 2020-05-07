@@ -92,8 +92,8 @@ rankEnum k rs = BitArray.rank (rsBitmap rs) True k
 -- @'select' i rs@ returns \(i\)th least key (as 'Int') from @rs@
 -- along with its associated value.
 --
--- >>> select 2 ([(3, 'a'), (64, 'b'), (-32, 'c')] :: RankSelectMap Int8 Char)
--- (3,'a')
+-- >>> selectEnum 2 ([(3, 'a'), (64, 'b'), (-32, 'c')] :: RankSelectMap Int8 Char)
+-- (131,'a')
 selectEnum :: (Bounded k, Enum k) => Int -> RankSelectMap k v -> (Int, v)
 selectEnum i rs = (k, rsValues rs Vector.! (i - 1))
   where
