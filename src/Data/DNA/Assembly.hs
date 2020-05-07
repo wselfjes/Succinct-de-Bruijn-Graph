@@ -61,12 +61,14 @@ nodes
   => DeBruijnGraph n a -> [Node n a]
 nodes = nub . concatMap edgeNodes . edges
 
-graphFromReads :: forall n a. (KnownNat n, Bounded a, Enum a) => [[a]] -> DeBruijnGraph n a
+graphFromReads
+  :: forall n a. (KnownNat (n + 1), Bounded a, Enum a)
+  => [[a]] -> DeBruijnGraph n a
 graphFromReads segments = DeBruijnGraph $ RSMap.fromEnumListWith (+) size
   [ (chunkId, 1)
   | segment <- segments
-  , chunkId <- fixedBoundedEnumChunks (Proxy @n) segment
-  ] where size = boundedEnumSize (Proxy @(FixedList n a))
+  , chunkId <- fixedBoundedEnumChunks (Proxy @(n + 1)) segment
+  ] where size = boundedEnumSize (Proxy @(Edge n a))
 
 -- | Successor edges of a node.
 successorEdges

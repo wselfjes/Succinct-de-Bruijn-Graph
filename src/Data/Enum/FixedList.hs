@@ -15,6 +15,7 @@ import           Data.List.Utils (chunksOf)
 
 -- $setup
 -- >>> :set -XDataKinds
+-- >>> :set -XTypeApplications
 
 -- * Lists of fixed length
 
@@ -69,18 +70,21 @@ fixedChunks = map FixedList . chunksOf n
 -- @
 -- fixedBoundedEnumChunks = map fromEnum . fixedChunks
 -- @
+--
+-- prop> fixedBoundedEnumChunks @3 Proxy xs == map fromEnum (fixedChunks @3 (xs :: [Char])
 fixedBoundedEnumChunks
   :: forall n a. (KnownNat n, Bounded a, Enum a) => Proxy n -> [a] -> [Int]
 fixedBoundedEnumChunks _ ys = go 0 [] ys
   where
     go _ _ [] = []
-    go _ [] xs = go (fromEnum (FixedList @n zs)) is xs'
+    go _ [] xs = go (fromEnum (FixedList @n (minBound : zs))) is xs'
       where
-        is = map fromBoundedEnum zs
-        (zs, xs') = splitAt n xs
-    go j (i:is) (x:xs) = j : go j' is xs
+        is = map fromBoundedEnum (minBound : zs)
+        (zs, xs') = splitAt (n - 1) xs
+    go j (i:is) (x:xs) = j' : go j' (is ++ [xN]) xs
       where
-        j' = (j - i) `div` base + fromBoundedEnum x * base ^ (n - 1)
+        j' = (j - i) `div` base + xN * base ^ (n - 1)
+        xN = fromBoundedEnum x
 
     n = fromIntegral (natVal (Proxy :: Proxy n))
     base = boundedEnumSize ys
