@@ -21,6 +21,7 @@ import           Data.List.Utils     (chunksOf, nubSort)
 
 -- $setup
 -- >>> :set -XDataKinds
+-- >>> :set -XTypeApplications
 
 type Nucleotide = Letter "ACGT"
 

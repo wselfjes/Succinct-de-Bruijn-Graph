@@ -78,7 +78,7 @@ fixedChunks = map FixedList . chunksOf n
 -- fixedBoundedEnumChunks = map fromEnum . fixedChunks
 -- @
 --
--- prop> fixedBoundedEnumChunks @3 Proxy xs == map fromEnum (fixedChunks @3 (xs :: [Char])
+-- prop> fixedBoundedEnumChunks @3 Proxy xs == map fromEnum (fixedChunks @3 (xs :: [Char]))
 fixedBoundedEnumChunks
   :: forall n a. (KnownNat n, Bounded a, Enum a) => Proxy n -> [a] -> [Int]
 fixedBoundedEnumChunks _ ys = go 0 [] ys
