@@ -1,4 +1,4 @@
-module Data.BitArrays.VectorBitArraySpec where
+module Data.BitArray.VectorBitArraySpec where
 
 import           Data.BitArray.Class
 import           Data.BitArray.VectorBitArray

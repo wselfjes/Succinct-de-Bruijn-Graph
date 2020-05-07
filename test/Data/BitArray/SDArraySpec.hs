@@ -1,4 +1,4 @@
-module Data.BitArrays.SDArraySpec where
+module Data.BitArray.SDArraySpec where
 
 import           Data.BitArray.Class
 import           Data.BitArray.SDArray
@@ -37,6 +37,12 @@ testRank = s `shouldBe` 0
     bitArray = fromOnes 8 2 [5, 7] :: SDArray'
     s = sdarrayRank bitArray True 3
 
+testGetBit :: IO ()
+testGetBit = bit `shouldBe` False
+  where
+    bitArray = fromOnes 8 2 [5, 7] :: SDArray'
+    bit = sdarrayGetBit 6 bitArray 
+
 spec :: Spec
 spec =
   describe "Tests for SDArray" $ do
@@ -45,4 +51,5 @@ spec =
     it "Build size" testBuildSize
     it "Select" testSelect
     it "Rank" testRank
+    it "Get bit" testGetBit
 

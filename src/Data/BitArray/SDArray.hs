@@ -3,6 +3,7 @@
 --
 -- This is an implementation of a succinct bit array
 -- based on the paper [Practical Entropy-Compressed Rank/Select Dictionary](https://arxiv.org/abs/cs/0610001) by Daisuke Okanohara and Kunihiko Sadakane.
+-- [hillbig/sdarray](https://github.com/hillbig/sdarray) used as an example
 module Data.BitArray.SDArray where
 
 import           Data.BitArray.Class
@@ -33,6 +34,7 @@ instance BitArray darray => BitArray (SDArray darray) where
   select        = sdarraySelect
   rank          = sdarrayRank
   fromOnes      = sdarrayFromOnes
+  getBit        = sdarrayGetBit
 
   -- TODO: efficient getBit implementation?
 
@@ -133,4 +135,14 @@ sdarrayRank SDArray{..} True pos = getPos y' x'
       | not (getBit y upperBits) = x
       | lowerBits Vec.! x >= j = if lowerBits Vec.! x == j then x + 1 else x
       | otherwise = getPos (y + 1) (x + 1)
+
+-- | Get bit from bit array is equal @rank ba pos@ - @rank ba (pos - 1)@
+sdarrayGetBit
+  :: BitArray darray
+  => Int
+  -> SDArray darray
+  -> Bool
+sdarrayGetBit pos arr = if (rank arr True pos) - (rank arr True (pos - 1)) == 0 
+                        then False 
+                        else True
 

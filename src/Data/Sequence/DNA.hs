@@ -55,6 +55,9 @@ unsafeCharToNucleotide c = error $
 allNucleotides :: [Nucleotide]
 allNucleotides = [minBound..maxBound]
 
+-- |
+-- >>> mergeDNASequence "ACGTA" "GTAC"
+-- ACGTAC
 mergeDNASequence :: DNASequence -> DNASequence -> DNASequence
 mergeDNASequence (Sequence l) (Sequence r) = Sequence (merge l r [])
   where

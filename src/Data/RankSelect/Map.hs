@@ -93,7 +93,7 @@ rankEnum k rs = BitArray.rank (rsBitmap rs) True k
 -- along with its associated value.
 --
 -- >>> select 2 ([(3, 'a'), (64, 'b'), (-32, 'c')] :: RankSelectMap Int8 Char)
--- (128,'a')
+-- (3,'a')
 selectEnum :: (Bounded k, Enum k) => Int -> RankSelectMap k v -> (Int, v)
 selectEnum i rs = (k, rsValues rs Vector.! (i - 1))
   where
