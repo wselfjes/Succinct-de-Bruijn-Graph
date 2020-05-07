@@ -7,11 +7,12 @@
 module Data.Enum.FixedList where
 
 import           Data.Proxy
-import           Data.String     (IsString (..))
+import           Data.String      (IsString (..))
 import           GHC.TypeLits
 
+import           Data.Enum.Letter
 import           Data.Enum.Utils
-import           Data.List.Utils (chunksOf)
+import           Data.List.Utils  (chunksOf)
 
 -- $setup
 -- >>> :set -XDataKinds
@@ -21,6 +22,12 @@ import           Data.List.Utils (chunksOf)
 
 newtype FixedList (n :: Nat) a = FixedList { getFixedList :: [a] }
   deriving (Eq, Ord, Show)
+
+instance {-# OVERLAPPING #-} Show (FixedList n (Letter s)) where
+  show (FixedList xs) = show (map getLetter xs)
+
+instance (KnownNat n, KnownSymbol s) => IsString (FixedList n (Letter s)) where
+  fromString = unsafeFixedList . unsafeLetters
 
 unsafeFixedList :: forall n a. KnownNat n => [a] -> FixedList n a
 unsafeFixedList xs
