@@ -4,6 +4,7 @@
 {-# LANGUAGE ScopedTypeVariables        #-}
 {-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeOperators              #-}
+{-# LANGUAGE UndecidableInstances       #-}
 module Data.DNA.Assembly where
 
 import           Data.List           (nub)
@@ -20,6 +21,7 @@ import           Data.List.Utils     (chunksOf, nubSort)
 
 -- $setup
 -- >>> :set -XDataKinds
+-- >>> :set -XTypeApplications
 
 type Nucleotide = Letter "ACGT"
 
@@ -47,28 +49,53 @@ readChunks = map (Chunk . FixedList) . chunksOf n
 newtype DeBruijnGraph n a = DeBruijnGraph
   { edgeCount :: RankSelectMap (Edge n a) Int }
 
+instance (Show (Edge n a), Bounded a, Enum a, KnownNat (n + 1))
+  => Show (DeBruijnGraph n a) where
+  show = show . toMultiplicityList
+
+toMultiplicityList
+  :: (Bounded a, Enum a, KnownNat (n + 1))
+  => DeBruijnGraph n a -> [(Edge n a, Int)]
+toMultiplicityList = RSMap.toListBoundedEnum . edgeCount
+
 type Edge n = FixedList (n + 1)
 type Node n = FixedList n
 
 edgeNodes :: Edge n a -> [Node n a]
 edgeNodes (FixedList xs) = [FixedList (init xs), FixedList (tail xs)]
 
+-- |
+-- >>> edges (graphFromReads @2 [unsafeLetters @"ACTG" "AAACCAACC"])
+-- ["AAA","CAA","CCA","AAC","ACC"]
 edges :: (Bounded a, Enum a, KnownNat (n + 1)) => DeBruijnGraph n a -> [Edge n a]
 edges = RSMap.keys toBoundedEnum . edgeCount
 
+-- |
+--
+-- >>> nodes (graphFromReads @2 [unsafeLetters @"ACTG" "AAACCAACC"])
+-- ["AA","CA","CC","AC"]
 nodes
   :: (Bounded a, Enum a, Eq a, KnownNat n, KnownNat (n + 1))
   => DeBruijnGraph n a -> [Node n a]
 nodes = nub . concatMap edgeNodes . edges
 
-graphFromReads :: forall n a. (KnownNat n, Bounded a, Enum a) => [[a]] -> DeBruijnGraph n a
+-- |
+--
+-- >>> graphFromReads @2 [unsafeLetters @"ACTG" "AAACCAACC"]
+-- [("AAA",1),("CAA",1),("CCA",1),("AAC",2),("ACC",2)]
+graphFromReads
+  :: forall n a. (KnownNat (n + 1), Bounded a, Enum a)
+  => [[a]] -> DeBruijnGraph n a
 graphFromReads segments = DeBruijnGraph $ RSMap.fromEnumListWith (+) size
   [ (chunkId, 1)
   | segment <- segments
-  , chunkId <- fixedBoundedEnumChunks (Proxy @n) segment
-  ] where size = boundedEnumSize (Proxy @(FixedList n a))
+  , chunkId <- fixedBoundedEnumChunks (Proxy @(n + 1)) segment
+  ] where size = boundedEnumSize (Proxy @(Edge n a))
 
 -- | Successor edges of a node.
+--
+-- >>> Data.DNA.Assembly.successorEdges (graphFromReads @2 [unsafeLetters @"AB" "AABABBA"]) "AB"
+-- [("AAB",1),("BAB",1),("ABB",1)]
 successorEdges
   :: forall n a. (Bounded a, Enum a, KnownNat n, KnownNat (n + 1))
   => DeBruijnGraph n a
