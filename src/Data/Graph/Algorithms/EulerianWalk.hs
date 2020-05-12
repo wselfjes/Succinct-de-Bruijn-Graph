@@ -1,13 +1,13 @@
 module Data.Graph.Algorithms.EulerianWalk where
 
-import           Data.BitArray.Class
+import           Data.RankSelectArray.Class
 import           Data.Graph.DeBruijnGraph
 import           Data.Sequence.DNA
 import qualified Data.Set                 as Set
 
 -- |
 eulerBackTracking
-  :: (Enum a, BitArray b)
+  :: (Enum a, RankSelectArray b)
   => DeBruijnGraph a b -- ^ de Bruijn Graph
   -> Maybe Edge -- ^ Starting edge for backtracking. If nothing Starting edge gets from visited edges
   -> [Edge] -- ^ Visited edges
@@ -41,7 +41,7 @@ eulerBackTracking deBruijnGraph (Just current) visited@(newCurrent:xs) path =
 
 -- | Find Euler Path in de Bruijn Graph. An Euler path is a path that uses every edge of a graph exactly once.
 eulerPath
-  :: (Enum a, BitArray b)
+  :: (Enum a, RankSelectArray b)
   => DeBruijnGraph a b -- ^ de Bruijn Graph
   -> Edge -- ^ Starting edge
   -> [Edge] -- ^ Visited edges
@@ -133,7 +133,7 @@ selectEndNode l = endNode
 
 -- | Successor edges of node
 successorEdges
-  :: (BitArray b)
+  :: (RankSelectArray b)
   => b -- ^ Bit array
   -> Node -- ^ Node
   -> [Edge] -- ^ List of edges from node
@@ -149,7 +149,7 @@ successorEdges bitArr' node = s
 
 -- | Assembly de Bruijn Graph. Create original DNA from sequencing subDNAs
 assemblyDeBruijnUsingEulerianWalk
-  :: (BitArray b)
+  :: (RankSelectArray b)
   => DeBruijnGraph Nucleotide b-- ^ de Bruijn Graph
   -> DNASequence                             -- ^ Assembled DNA
 assemblyDeBruijnUsingEulerianWalk deBruijnGraph = foldl (mergeDNASequence) (Sequence []) eulerPath'

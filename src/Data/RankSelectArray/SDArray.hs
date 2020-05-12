@@ -4,10 +4,11 @@
 -- This is an implementation of a succinct bit array
 -- based on the paper [Practical Entropy-Compressed Rank/Select Dictionary](https://arxiv.org/abs/cs/0610001) by Daisuke Okanohara and Kunihiko Sadakane.
 -- [hillbig/sdarray](https://github.com/hillbig/sdarray) used as an example
-module Data.BitArray.SDArray where
+module Data.RankSelectArray.SDArray where
 
-import           Data.BitArray.Class
-import           Data.BitArray.VectorBitArray
+import           Data.RankSelectArray.Class
+import           Data.RankSelectArray.VectorBitArray
+--import           Data.RankSelectArray.DenseArray
 import qualified Data.IntMap                  as IntMap
 import qualified Data.Vector                  as Vec
 
@@ -28,18 +29,17 @@ countOnes = length . lowerBits
 
 type SDArray' = SDArray VectorBitArray
 
-instance BitArray darray => BitArray (SDArray darray) where
+instance RankSelectArray darray => RankSelectArray (SDArray darray) where
   generateEmpty = sdarrayGenerateEmpty
   setBits       = sdarraySetBits
   select        = sdarraySelect
   rank          = sdarrayRank
   fromOnes      = sdarrayFromOnes
-  getBit        = sdarrayGetBit
 
   -- TODO: efficient getBit implementation?
 
 sdarrayGenerateEmpty
-  :: BitArray darray
+  :: RankSelectArray darray
   => BitArraySize
   -> SDArray darray
 sdarrayGenerateEmpty _ = SDArray
@@ -53,7 +53,7 @@ sdarrayGenerateEmpty _ = SDArray
 --
 -- NOTE: this method reconstructs 'SDArray' from scratch.
 sdarraySetBits
-  :: BitArray darray
+  :: RankSelectArray darray
   => SDArray darray
   -> [(Int, Bool)]
   -> SDArray darray
@@ -65,13 +65,13 @@ sdarraySetBits sdarray elems = fromOnes
     newOnesMap = intMapElems `IntMap.union` intMapOnes
     newOnes = map fst (filter snd (IntMap.toList newOnesMap))
 
-toOnes :: BitArray darray => SDArray darray -> [Int]
+toOnes :: RankSelectArray darray => SDArray darray -> [Int]
 toOnes arr = map (select arr True) [1..m]
   where
     m = countOnes arr
 
 sdarrayFromOnes
-  :: BitArray darray
+  :: RankSelectArray darray
   => BitArraySize
   -> Int
   -> [Int]            -- ^ Indices of 1s in a bit-array.
@@ -108,7 +108,7 @@ getLowerBits offset value = value .&. (ones `shiftR` (n - offset - 1))
     ones = Bits.complement Bits.zeroBits `Bits.clearBit` (n - 1)
 
 sdarraySelect
-  :: BitArray darray
+  :: RankSelectArray darray
   => SDArray darray
   -> Bool
   -> Int
@@ -118,7 +118,7 @@ sdarraySelect SDArray{..} True pos =
   ((select upperBits True pos - (pos - 1)) `shiftL` bitsOffset) .|. lowerBits Vec.! (pos - 1)
 
 sdarrayRank
-  :: BitArray darray
+  :: RankSelectArray darray
   => SDArray darray
   -> Bool
   -> Int
@@ -135,14 +135,4 @@ sdarrayRank SDArray{..} True pos = getPos y' x'
       | not (getBit y upperBits) = x
       | lowerBits Vec.! x >= j = if lowerBits Vec.! x == j then x + 1 else x
       | otherwise = getPos (y + 1) (x + 1)
-
--- | Get bit from bit array is equal @rank ba pos@ - @rank ba (pos - 1)@
-sdarrayGetBit
-  :: BitArray darray
-  => Int
-  -> SDArray darray
-  -> Bool
-sdarrayGetBit pos arr = if (rank arr True pos) - (rank arr True (pos - 1)) == 0 
-                        then False 
-                        else True
 

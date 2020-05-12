@@ -1,9 +1,9 @@
-module Data.BitArray.Class where
+module Data.RankSelectArray.Class where
 
 type BitArraySize = Int
 
 -- | Class for represent Bit Array, may be implicit bit array such as Vector Bool, or explicit like sdarrays
-class BitArray a where
+class RankSelectArray a where
   select        :: a -> Bool -> Int -> Int
   rank          :: a -> Bool -> Int -> Int
 

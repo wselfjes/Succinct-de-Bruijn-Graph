@@ -18,9 +18,9 @@ import           Data.Vector           (Vector)
 import qualified Data.Vector           as Vector
 import qualified GHC.Exts              as GHC
 
-import qualified Data.BitArray.Class   as BitArray
-import           Data.BitArray.SDArray (SDArray')
-import qualified Data.BitArray.SDArray as SDArray
+import qualified Data.RankSelectArray.Class   as RankSelectArray
+import           Data.RankSelectArray.SDArray (SDArray')
+import qualified Data.RankSelectArray.SDArray as SDArray
 
 import           Data.Enum.Utils
 import           Data.List.Utils
@@ -63,7 +63,7 @@ instance (Bounded k, Enum k) => GHC.IsList (RankSelectMap k v) where
 -- >>> rank 45 ([(3, 'a'), (64, 'b'), (-32, 'c')] :: RankSelectMap Int8 Char)
 -- 2
 rank :: (Bounded k, Enum k) => k -> RankSelectMap k v -> Int
-rank x rs = BitArray.rank (rsBitmap rs) True (fromBoundedEnum x)
+rank x rs = RankSelectArray.rank (rsBitmap rs) True (fromBoundedEnum x)
 
 -- | \(O(?)\).
 --
@@ -75,7 +75,7 @@ rank x rs = BitArray.rank (rsBitmap rs) True (fromBoundedEnum x)
 select :: (Bounded k, Enum k) => Int -> RankSelectMap k v -> (k, v)
 select i rs = (toBoundedEnum k, rsValues rs Vector.! (i - 1))
   where
-    k = BitArray.select (rsBitmap rs) True i
+    k = RankSelectArray.select (rsBitmap rs) True i
 
 -- | \(O(?)\).
 --
@@ -85,7 +85,7 @@ select i rs = (toBoundedEnum k, rsValues rs Vector.! (i - 1))
 -- >>> rankEnum (127 + 45) ([(3, 'a'), (64, 'b'), (-32, 'c')] :: RankSelectMap Int8 Char)
 -- 2
 rankEnum :: Int -> RankSelectMap k v -> Int
-rankEnum k rs = BitArray.rank (rsBitmap rs) True k
+rankEnum k rs = RankSelectArray.rank (rsBitmap rs) True k
 
 -- | \(O(?)\).
 --
@@ -97,7 +97,7 @@ rankEnum k rs = BitArray.rank (rsBitmap rs) True k
 selectEnum :: (Bounded k, Enum k) => Int -> RankSelectMap k v -> (Int, v)
 selectEnum i rs = (k, rsValues rs Vector.! (i - 1))
   where
-    k = BitArray.select (rsBitmap rs) True i
+    k = RankSelectArray.select (rsBitmap rs) True i
 
 -- | Capacity of 'RankSelectMap' (maximum possible number of elements).
 --
@@ -149,7 +149,7 @@ fromEnumListAscN :: Int -> Int -> [(Int, v)] -> RankSelectMap k v
 fromEnumListAscN n m kvs
   | n < m = error $ "this RankSelectMap cannot contain more than " <> show n <> " elements"
   | otherwise = RankSelectMap
-    { rsBitmap = BitArray.fromOnes n m (map fst kvs)
+    { rsBitmap = RankSelectArray.fromOnes n m (map fst kvs)
     , rsValues = Vector.fromList (map snd kvs)
     }
 
@@ -193,7 +193,7 @@ fromListAscN
 fromListAscN toInt n m kvs
   | n < m = error $ "this RankSelectMap cannot contain more than " <> show n <> " elements"
   | otherwise = RankSelectMap
-    { rsBitmap = BitArray.fromOnes n m (map (toInt . fst) kvs)
+    { rsBitmap = RankSelectArray.fromOnes n m (map (toInt . fst) kvs)
     , rsValues = Vector.fromList (map snd kvs)
     }
 
@@ -213,3 +213,18 @@ fromListAscBoundedEnumN = fromListAscN fromBoundedEnum
 
 fromListAscBoundedEnum :: forall k v. (Bounded k, Enum k) => [(k, v)] -> RankSelectMap k v
 fromListAscBoundedEnum xs = fromListAsc fromBoundedEnum (boundedEnumSize (Proxy @k)) xs
+
+
+-- * Update
+
+-- | Update element at key k
+update 
+  :: Enum k
+  => (v -> v)           -- ^ Function to get to new value
+  -> k                  -- ^ Key
+  -> RankSelectMap k v  -- ^ Original map
+  -> RankSelectMap k v  -- ^ Result map
+update f k map = map
+--  where
+--    map' = 
+--    key = 

@@ -2,7 +2,7 @@
 module Data.Graph.DeBruijnGraph where
 
 import           Control.Arrow       ((&&&))
-import           Data.BitArray.Class
+import           Data.RankSelectArray.Class
 import           Data.Function       (on)
 import qualified Data.IntMap.Strict  as IntMap
 import           Data.Sequence.DNA
@@ -42,7 +42,7 @@ instance Eq b => Eq (DeBruijnGraph a b) where
 -- * Constructions
 -- | Create graph without edges
 emptyDeBruijn
-  :: (BitArray b)
+  :: (RankSelectArray b)
   => Base -- ^ Length of the edge.
   -> DeBruijnGraph a b -- ^ Empty de Bruijn Graph. Without any edges.
 emptyDeBruijn base =
@@ -50,7 +50,7 @@ emptyDeBruijn base =
 
 -- | Create de Bruijn Graph from Sequences
 fromSequences
-  :: (Enum a, BitArray b)
+  :: (Enum a, RankSelectArray b)
   => Base -- ^ Length of the edge
   -> [Sequence a] -- ^ Sequeences which will be inserted
   -> DeBruijnGraph a b -- ^ de Bruijn Graph with those sequences
@@ -60,7 +60,7 @@ fromSequences base seqs = insertSequences seqs (emptyDeBruijn base)
 -- | Insert sequence into graph.
 -- If length of the sequence is greater then base of the graph sequence splited into overlaped chunks.
 insertSequence
-  :: (Enum a, BitArray b)
+  :: (Enum a, RankSelectArray b)
   => Sequence a -- ^ Sequence.
   -> DeBruijnGraph a b -- ^ de Bruijn graph.
   -> DeBruijnGraph a b -- ^ de Bruijn graph with sequence.
@@ -78,7 +78,7 @@ insertSequence seq@(Sequence l) deBruijnGraph
 
 -- | Insert multiple sequences into de Bruijn graph.
 insertSequences
-  :: (Enum a, BitArray b)
+  :: (Enum a, RankSelectArray b)
   => [Sequence a] -- ^ sequences to insert.
   -> DeBruijnGraph a b -- ^ de Bruijn Graph.
   -> DeBruijnGraph a b -- ^ de Bruijn Graph with those sequences.
@@ -88,7 +88,7 @@ insertSequences (seq:seqs) deBruijnGraph = insertSequences seqs newDeBruijnGraph
     newDeBruijnGraph = insertSequence seq deBruijnGraph
 
 preprocess
-  :: (Enum a, BitArray b)
+  :: (Enum a, RankSelectArray b)
   => DeBruijnGraph a b
   -> DeBruijnGraph a b
 preprocess deBruijnGraph = deBruijnGraph {bitArr = bitArr'}
@@ -98,7 +98,7 @@ preprocess deBruijnGraph = deBruijnGraph {bitArr = bitArr'}
 
 -- | Remove sequence from the graph. If sequence is empty original graph will be returned.
 diffSequence
-  :: (Enum a, BitArray b)
+  :: (Enum a, RankSelectArray b)
   => DeBruijnGraph a b -- ^ de Bruijn Graph.
   -> Sequence a -- ^ Sequence which will be removed from de Bruijn Graph.
   -> DeBruijnGraph a b -- ^ de Bruijn Graph without sequence.
@@ -121,7 +121,7 @@ diffSequence deBruijnGraph seq' =
 
 -- | Alias for diffSequence
 (///)
-  :: (Enum a, BitArray b)
+  :: (Enum a, RankSelectArray b)
   => DeBruijnGraph a b -- ^ de Bruijn Graph.
   -> Sequence a -- ^ Sequence which will be removed from de Bruijn Graph.
   -> DeBruijnGraph a b -- ^ de Bruijn Graph without sequence.

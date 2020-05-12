@@ -11,9 +11,9 @@ module Data.RankSelect.Set where
 import           Data.List             (intercalate)
 import qualified GHC.Exts              as GHC
 
-import qualified Data.BitArray.Class   as BitArray
-import           Data.BitArray.SDArray (SDArray')
-import qualified Data.BitArray.SDArray as SDArray
+import qualified Data.RankSelectArray.Class   as RankSelectArray
+import           Data.RankSelectArray.SDArray (SDArray')
+import qualified Data.RankSelectArray.SDArray as SDArray
 
 import           Data.Enum.Utils
 import           Data.List.Utils
@@ -58,7 +58,7 @@ instance (Bounded a, Enum a) => GHC.IsList (RankSelectSet a) where
 -- >>> rank 'o' (fromListBoundedEnum "world" :: RankSelectSet Char)
 -- 3
 rank :: (Bounded a, Enum a) => a -> RankSelectSet a -> Int
-rank x rs = BitArray.rank (rsBitmap rs) True (fromBoundedEnum x)
+rank x rs = RankSelectArray.rank (rsBitmap rs) True (fromBoundedEnum x)
 
 -- | \(O(?)\).
 --
@@ -70,7 +70,7 @@ rank x rs = BitArray.rank (rsBitmap rs) True (fromBoundedEnum x)
 -- >>> select 3 (fromListBoundedEnum "world" :: RankSelectSet Char)
 -- 'o'
 select :: (Bounded a, Enum a) => Int -> RankSelectSet a -> a
-select i rs = toBoundedEnum (BitArray.select (rsBitmap rs) True i)
+select i rs = toBoundedEnum (RankSelectArray.select (rsBitmap rs) True i)
 
 -- | Capacity of 'RankSelectSet' (maximum possible number of elements).
 --
@@ -111,7 +111,7 @@ fromEnumListAsc :: Int -> [Int] -> RankSelectSet a
 fromEnumListAsc n xs = fromEnumListAscN n (length xs) xs
 
 fromEnumListAscN :: Int -> Int -> [Int] -> RankSelectSet a
-fromEnumListAscN n m = RankSelectSet . BitArray.fromOnes n m
+fromEnumListAscN n m = RankSelectSet . RankSelectArray.fromOnes n m
 
 -- ** Convert an arbitrary list to 'RankSelectSet'
 
@@ -137,7 +137,7 @@ fromListAscN
   -> RankSelectSet a
 fromListAscN toInt n m
   | n < m = error $ "this RankSelectSet cannot contain more than " <> show n <> " elements"
-  | otherwise = RankSelectSet . BitArray.fromOnes n m . map toInt
+  | otherwise = RankSelectSet . RankSelectArray.fromOnes n m . map toInt
 
 fromListAsc :: (a -> Int) -> Int -> [a] -> RankSelectSet a
 fromListAsc toInt n xs = fromListAscN toInt n (length xs) xs

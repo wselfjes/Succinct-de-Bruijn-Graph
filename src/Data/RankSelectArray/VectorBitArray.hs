@@ -2,9 +2,9 @@
 -- |
 --
 -- TODO: module description
-module Data.BitArray.VectorBitArray where
+module Data.RankSelectArray.VectorBitArray where
 
-import           Data.BitArray.Class
+import           Data.RankSelectArray.Class
 import           Data.Maybe          (fromMaybe)
 import           Data.String         (IsString (..))
 import qualified Data.Vector         as V
@@ -20,7 +20,7 @@ newtype VectorBitArray = VectorBitArray
 toList :: VectorBitArray -> [Bool]
 toList = V.toList . getVec
 
-instance BitArray VectorBitArray where
+instance RankSelectArray VectorBitArray where
   generateEmpty size = VectorBitArray (V.generate size (const False))
   setBits            = flip setBits'
   select arr q i     = fromMaybe (-1) (select' q i arr)

@@ -78,6 +78,7 @@ successorEdges (DeBruijnGraph graph) node =
   [ (toBoundedEnum edgeId, count)
   | (edgeId, count) <- nubSort successors
   , edgeId >= 0
+  , count > 0
   ]
   where
     ranks =
@@ -86,4 +87,14 @@ successorEdges (DeBruijnGraph graph) node =
     successors = map (`RSMap.selectEnum` graph) ranks
     base = boundedEnumSize (Proxy @a)
     nodeVal = base * fromEnum node
+
+-- | Mark edge visited
+markEdge
+  :: forall n a. (Bounded a, Enum a, KnownNat n, KnownNat (n + 1))
+  => DeBruijnGraph n a -- ^ Original de Bruijn Graph
+  -> Edge n a          -- ^ Edge, which will be marked
+  -> DeBruijnGraph n a -- ^ New de Bruijn Graph
+markEdge (DeBruijnGraph graph) edge = DeBruijnGraph graph'
+  where
+    graph' = RSMap.update ((-) 1) edge graph
 

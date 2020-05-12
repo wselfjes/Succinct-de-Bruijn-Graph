@@ -1,6 +1,6 @@
 module Plotting.DeBruijnGraphPlotting where
 
-import           Data.BitArray.Class
+import           Data.RankSelectArray.Class
 import           Data.Graph.DeBruijnGraph
 import qualified Data.GraphViz                     as G
 import qualified Data.GraphViz.Attributes.Complete as G
@@ -18,7 +18,7 @@ type EdgeGraph a = (a, a, ELabel)
 
 
 toNodeEdgeList
-  :: (BitArray b)
+  :: (RankSelectArray b)
   => DeBruijnGraph Nucleotide b
   -> ([NodeGraph String], [EdgeGraph String])
 toNodeEdgeList deBruijnGrpah = (allNodes, allEdges)
@@ -45,7 +45,7 @@ deBruijnGraphParams = G.defaultParams {
     colorAttribute color = [ G.Color $ G.toColorList [ color ] ]
 
 drawGraph
-  :: (BitArray b)
+  :: (RankSelectArray b)
   => DeBruijnGraph Nucleotide b
   -> IO ()
 drawGraph deBruijnGraph = do
