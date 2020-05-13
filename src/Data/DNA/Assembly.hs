@@ -18,7 +18,6 @@ import           Data.Enum.FixedList
 import           Data.Enum.Letter
 import           Data.Enum.Utils     (boundedEnumSize, toBoundedEnum)
 import           Data.List.Utils     (chunksOf, nubSort)
-import           Debug.Trace         (trace)
 
 -- $setup
 -- >>> :set -XDataKinds
@@ -88,7 +87,7 @@ graphFromReads
   :: forall n a. (KnownNat (n + 1), Bounded a, Enum a, Show a)
   => [[a]] -> DeBruijnGraph n a
 graphFromReads segments = DeBruijnGraph $ RSMap.fromEnumListWith (+) size
-  [ (trace ("Chunk id " ++ show chunkId) chunkId, 1)
+  [ (chunkId, 1)
   | segment <- segments
   , chunkId <- (fixedBoundedEnumChunks (Proxy @(n + 1)) segment)
   ] where size = boundedEnumSize (Proxy @(Edge n a))
@@ -109,15 +108,12 @@ successorEdges (DeBruijnGraph graph) node =
   , count > 0
   ]
   where
-    ranks' = 
+    ranks = 
       filter (> RSMap.rankEnum (nodeVal - 1) graph)
         [RSMap.rankEnum (nodeVal + i) graph | i <- [0 .. (base - 1)]]
-    ranks = trace ("Govno " ++ show (RSMap.rankEnum (nodeVal - 1) graph)) ranks'
     successors = map (`RSMap.selectEnum` graph) ranks
-    base' = boundedEnumSize (Proxy @a)
-    base  = trace ("show base " ++ show base') base'
-    nodeVal' = base * fromEnum node
-    nodeVal = trace ("Node val " ++ show nodeVal') nodeVal'
+    base = boundedEnumSize (Proxy @a)
+    nodeVal = base * fromEnum node
 
 -- | Mark edge visited
 markEdge
