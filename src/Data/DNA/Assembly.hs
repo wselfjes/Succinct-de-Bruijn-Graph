@@ -18,6 +18,7 @@ import           Data.Enum.FixedList
 import           Data.Enum.Letter
 import           Data.Enum.Utils     (boundedEnumSize, toBoundedEnum)
 import           Data.List.Utils     (chunksOf, nubSort)
+import           Debug.Trace         (trace)
 
 -- $setup
 -- >>> :set -XDataKinds
@@ -84,18 +85,18 @@ nodes = nub . concatMap edgeNodes . edges
 -- >>> graphFromReads @2 [unsafeLetters @"ACTG" "AAACCAACC"]
 -- [("AAA",1),("CAA",1),("CCA",1),("AAC",2),("ACC",2)]
 graphFromReads
-  :: forall n a. (KnownNat (n + 1), Bounded a, Enum a)
+  :: forall n a. (KnownNat (n + 1), Bounded a, Enum a, Show a)
   => [[a]] -> DeBruijnGraph n a
 graphFromReads segments = DeBruijnGraph $ RSMap.fromEnumListWith (+) size
-  [ (chunkId, 1)
+  [ (trace ("Chunk id " ++ show chunkId) chunkId, 1)
   | segment <- segments
-  , chunkId <- fixedBoundedEnumChunks (Proxy @(n + 1)) segment
+  , chunkId <- (fixedBoundedEnumChunks (Proxy @(n + 1)) segment)
   ] where size = boundedEnumSize (Proxy @(Edge n a))
 
 -- | Successor edges of a node.
 --
 -- >>> Data.DNA.Assembly.successorEdges (graphFromReads @2 [unsafeLetters @"AB" "AABABBA"]) "AB"
--- [("AAB",1),("BAB",1),("ABB",1)]
+-- [("ABA",1),("ABB",1)]
 successorEdges
   :: forall n a. (Bounded a, Enum a, KnownNat n, KnownNat (n + 1))
   => DeBruijnGraph n a
@@ -108,12 +109,15 @@ successorEdges (DeBruijnGraph graph) node =
   , count > 0
   ]
   where
-    ranks =
+    ranks' = 
       filter (> RSMap.rankEnum (nodeVal - 1) graph)
-        [RSMap.rankEnum (nodeVal + i) graph | i <- [0 .. base]]
+        [RSMap.rankEnum (nodeVal + i) graph | i <- [0 .. (base - 1)]]
+    ranks = trace ("Govno " ++ show (RSMap.rankEnum (nodeVal - 1) graph)) ranks'
     successors = map (`RSMap.selectEnum` graph) ranks
-    base = boundedEnumSize (Proxy @a)
-    nodeVal = base * fromEnum node
+    base' = boundedEnumSize (Proxy @a)
+    base  = trace ("show base " ++ show base') base'
+    nodeVal' = base * fromEnum node
+    nodeVal = trace ("Node val " ++ show nodeVal') nodeVal'
 
 -- | Mark edge visited
 markEdge
@@ -123,5 +127,5 @@ markEdge
   -> DeBruijnGraph n a -- ^ New de Bruijn Graph
 markEdge (DeBruijnGraph graph) edge = DeBruijnGraph graph'
   where
-    graph' = RSMap.update ((-) 1) edge graph
+    graph' = RSMap.update (subtract 1) edge graph
 

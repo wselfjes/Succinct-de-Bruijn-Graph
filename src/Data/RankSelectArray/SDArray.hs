@@ -9,12 +9,12 @@ module Data.RankSelectArray.SDArray where
 import           Data.RankSelectArray.Class
 import           Data.RankSelectArray.VectorBitArray
 --import           Data.RankSelectArray.DenseArray
-import qualified Data.IntMap                  as IntMap
-import qualified Data.Vector                  as Vec
+import qualified Data.IntMap                         as IntMap
+import qualified Data.Vector                         as Vec
 
-import           Data.Bits                    (Bits (shiftL, shiftR, (.&.), (.|.)),
-                                               FiniteBits (finiteBitSize))
-import qualified Data.Bits                    as Bits
+import           Data.Bits                           (Bits (shiftL, shiftR, (.&.), (.|.)),
+                                                      FiniteBits (finiteBitSize))
+import qualified Data.Bits                           as Bits
 
 -- |
 data SDArray darray = SDArray
@@ -35,6 +35,7 @@ instance RankSelectArray darray => RankSelectArray (SDArray darray) where
   select        = sdarraySelect
   rank          = sdarrayRank
   fromOnes      = sdarrayFromOnes
+  getBit        = sdarrayGetBit
 
   -- TODO: efficient getBit implementation?
 
@@ -135,4 +136,15 @@ sdarrayRank SDArray{..} True pos = getPos y' x'
       | not (getBit y upperBits) = x
       | lowerBits Vec.! x >= j = if lowerBits Vec.! x == j then x + 1 else x
       | otherwise = getPos (y + 1) (x + 1)
+
+
+-- | Get bit from bit array is equal @rank ba pos@ - @rank ba (pos - 1)@
+sdarrayGetBit
+  :: RankSelectArray darray
+  => Int
+  -> SDArray darray
+  -> Bool
+sdarrayGetBit pos arr = if (rank arr True pos) - (rank arr True (pos - 1)) == 0 
+                        then False 
+                        else True
 

@@ -1,7 +1,7 @@
-module Data.BitArray.VectorBitArraySpec where
+module Data.RankSelectArray.VectorBitArraySpec where
 
-import           Data.BitArray.Class
-import           Data.BitArray.VectorBitArray
+import           Data.RankSelectArray.Class
+import           Data.RankSelectArray.VectorBitArray
 import           Test.Hspec
 
 testSelect :: IO ()

@@ -1,7 +1,7 @@
-module Data.BitArray.SDArraySpec where
+module Data.RankSelectArray.SDArraySpec where
 
-import           Data.BitArray.Class
-import           Data.BitArray.SDArray
+import           Data.RankSelectArray.Class
+import           Data.RankSelectArray.SDArray
 import qualified Data.Vector           as Vec
 import           Test.Hspec
 

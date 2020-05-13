@@ -2,7 +2,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Data.Graph.DeBruijnGraphSpec where
 
-import           Data.BitArray.VectorBitArray
+import           Data.RankSelectArray.VectorBitArray
 import           Data.Graph.Algorithms.EulerianWalk
 import           Data.Graph.DeBruijnGraph
 import           Data.Sequence.DNA

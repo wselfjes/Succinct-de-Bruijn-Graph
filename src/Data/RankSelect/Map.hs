@@ -218,13 +218,18 @@ fromListAscBoundedEnum xs = fromListAsc fromBoundedEnum (boundedEnumSize (Proxy 
 -- * Update
 
 -- | Update element at key k
+--
+-- >>> update (subtract 1) 'a' ([('a', 3), ('b', 2), ('c', 8)] :: RankSelectMap Char Int)
+-- fromListAscN fromBoundedEnum 1114112 3 [('a',2),('b',2),('c',8)]
 update 
-  :: Enum k
+  :: (Enum k, Bounded k)
   => (v -> v)           -- ^ Function to get to new value
   -> k                  -- ^ Key
   -> RankSelectMap k v  -- ^ Original map
   -> RankSelectMap k v  -- ^ Result map
-update f k map = map
---  where
---    map' = 
---    key = 
+update f k rs@(RankSelectMap _ values) = rs'
+  where
+    rs' = rs {rsValues = values Vector.// [(i - 1, f oldValue)]}
+    oldValue = snd (select i rs)
+    i = rank k rs
+    
