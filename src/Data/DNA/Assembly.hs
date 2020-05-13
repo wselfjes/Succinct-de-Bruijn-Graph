@@ -83,6 +83,8 @@ nodes = nub . concatMap edgeNodes . edges
 --
 -- >>> graphFromReads @2 [unsafeLetters @"ACTG" "AAACCAACC"]
 -- [("AAA",1),("CAA",1),("CCA",1),("AAC",2),("ACC",2)]
+-- >>> (Data.RankSelectArray.SDArray.toOnes . Data.RankSelect.Map.rsBitmap . edgeCount) (graphFromReads @1 [unsafeLetters @"ACGT" "TTCGGAAG"])
+-- [0,2,6,8,10,13,15]
 graphFromReads
   :: forall n a. (KnownNat (n + 1), Bounded a, Enum a, Show a)
   => [[a]] -> DeBruijnGraph n a
