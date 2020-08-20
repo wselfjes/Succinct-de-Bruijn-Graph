@@ -110,7 +110,7 @@ successorEdges (DeBruijnGraph graph) node =
   , count > 0
   ]
   where
-    ranks = 
+    ranks =
       filter (> RSMap.rankEnum (nodeVal - 1) graph)
         [RSMap.rankEnum (nodeVal + i) graph | i <- [0 .. (base - 1)]]
     successors = map (`RSMap.selectEnum` graph) ranks

@@ -25,6 +25,7 @@ data DeBruijnGraph a b = DeBruijnGraph
 instance (Show a, Eq a, Enum a) => Show (DeBruijnGraph a b) where
   show = show . toMultiplicityList
 
+-- | Multiplicity list is a list that contains pair of edges and number of occurences in the graph.
 toMultiplicityList :: (Enum a) => DeBruijnGraph a b -> [(Sequence a, Int)]
 toMultiplicityList (DeBruijnGraph base _ c) = multiplicityList
   where
@@ -87,6 +88,8 @@ insertSequences (seq:seqs) deBruijnGraph = insertSequences seqs newDeBruijnGraph
   where
     newDeBruijnGraph = insertSequence seq deBruijnGraph
 
+-- | Prepare de Bruijn graph to processing. 
+-- Optimize structure of de Bruijn graph in sdarray. 
 preprocess
   :: (Enum a, RankSelectArray b)
   => DeBruijnGraph a b
