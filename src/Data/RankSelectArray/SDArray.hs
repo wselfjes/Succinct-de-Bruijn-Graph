@@ -39,6 +39,7 @@ instance RankSelectArray darray => RankSelectArray (SDArray darray) where
 
   -- TODO: efficient getBit implementation?
 
+-- | Create empty sdarray.
 sdarrayGenerateEmpty
   :: RankSelectArray darray
   => BitArraySize
@@ -50,7 +51,7 @@ sdarrayGenerateEmpty _ = SDArray
   , bitsOffset = 1
   }
 
--- |
+-- | Set bits in sdarray.
 --
 -- NOTE: this method reconstructs 'SDArray' from scratch.
 sdarraySetBits
@@ -66,11 +67,13 @@ sdarraySetBits sdarray elems = fromOnes
     newOnesMap = intMapElems `IntMap.union` intMapOnes
     newOnes = map fst (filter snd (IntMap.toList newOnesMap))
 
+-- | Convert sdarray to a list of positions of ones in input array.
 toOnes :: RankSelectArray darray => SDArray darray -> [Int]
 toOnes arr = map (select arr True) [1..m]
   where
     m = countOnes arr
 
+-- | Convert list of positions of one to sdarray.
 sdarrayFromOnes
   :: RankSelectArray darray
   => BitArraySize
@@ -93,13 +96,13 @@ sdarrayFromOnes n m onesPos = SDArray
     upperBitsPos = zipWith (+) [0..] upperBitsList
     newUpperBits = fromOnes (2 * m) m upperBitsPos
 
--- |
+-- | Just right shift.
 -- >>> getUpperBits 5 127
 -- 3
 getUpperBits :: Bits a => Int -> a -> a
 getUpperBits skipNumber value = value `shiftR` skipNumber
 
--- |
+-- | Replace first n bits with zero.
 -- >>> getLowerBits 5 127 :: Int
 -- 31
 getLowerBits :: FiniteBits a => Int -> a -> a
@@ -108,6 +111,9 @@ getLowerBits offset value = value .&. (ones `shiftR` (n - offset - 1))
     n = finiteBitSize ones
     ones = Bits.complement Bits.zeroBits `Bits.clearBit` (n - 1)
 
+-- | Select in sdarray. 
+-- Using formula select(i, B) = (select(i, H) − i) · 2^w + L[i].
+-- Where B is byte array, H array of upper bits, w number of lower bits, L array of lower bits.
 sdarraySelect
   :: RankSelectArray darray
   => SDArray darray
@@ -118,6 +124,8 @@ sdarraySelect _ False _ = error "select for SDArray is not implemented (for 0)"
 sdarraySelect SDArray{..} True pos =
   ((select upperBits True pos - (pos - 1)) `shiftL` bitsOffset) .|. lowerBits Vec.! (pos - 1)
 
+-- | Rank in sdarray.
+--
 sdarrayRank
   :: RankSelectArray darray
   => SDArray darray

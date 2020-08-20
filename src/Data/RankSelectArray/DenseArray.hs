@@ -9,6 +9,7 @@ import           Data.RankSelectArray.VectorBitArray
 import qualified Data.Vector as V
 
 
+-- | Constants for dense array
 l1 :: Int
 l1 = 2^10
 l2 :: Int
@@ -30,6 +31,7 @@ instance RankSelectArray DenseArray where
 --  fromOnes      = denseFromOnes
 
 
+-- | Rank in dense array. Not implemented yet.
 denseRank
   :: DenseArray
   -> Bool
@@ -37,6 +39,7 @@ denseRank
   -> Int
 denseRank _ _ _ = 0
 
+-- | Select in dense array. Not implemented yet.
 denseSelect
   :: DenseArray
   -> Bool
@@ -44,11 +47,13 @@ denseSelect
   -> Int
 denseSelect _ _ _ = 0
 
+-- | Generate empty dense array.
 denseGenerateEmpty
   :: BitArraySize
   -> DenseArray
 denseGenerateEmpty size = DenseArray [] size
 
+-- | Set bits in dense array. Create new array.
 denseSetBits
   :: DenseArray
   -> [(Int, Bool)]

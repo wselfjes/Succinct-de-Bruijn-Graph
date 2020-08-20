@@ -5,7 +5,7 @@ import           Data.Graph.DeBruijnGraph
 import           Data.Sequence.DNA
 import qualified Data.Set                 as Set
 
--- |
+-- | Backtrack when euler path goes into impasse.
 eulerBackTracking
   :: (Enum a, RankSelectArray b)
   => DeBruijnGraph a b -- ^ de Bruijn Graph
@@ -62,6 +62,8 @@ eulerPath deBruijnGraph current visited path =
     newVisited = current : visited
     newCurrent = successor
 
+-- | Choose start node over all nodes.
+-- Choose by rule (out edges - in edges) % 2 = 1
 selectStartNode ::
      [(Node, (Int, Int))] -- ^ List of nodes with count of in edges, and out edges
   -> Node -- ^ Start node
@@ -75,7 +77,8 @@ selectStartNode l = startNode
         then fst $ head (filter (\(_, (_, out)) -> out > 0) l)
         else fst $ head filteredL
 
--- | Select end node.
+-- | Select end node over all nodes.
+-- Choose by rule (in edges - out edges) % 2 = 1
 selectEndNode ::
      [(Node, (Int, Int))] -- ^ List of nodes with count of in edges, and out edges
   -> Node -- ^ End node
@@ -132,6 +135,7 @@ selectEndNode l = endNode
 --    multipliedVec' = multipliedVec deBruijnGraph
 
 -- | Successor edges of node
+-- Calculate by formula succ(n) = {select(r) where r in [rank(4n), rank(4n+4))}
 successorEdges
   :: (RankSelectArray b)
   => b -- ^ Bit array

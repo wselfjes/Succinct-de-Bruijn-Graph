@@ -31,16 +31,16 @@ type DNASequence = Sequence Nucleotide
 instance (Show a) => Show (Sequence a) where
   show = concatMap show . getSequence
 
--- |
+-- | Convert string to DNASequence
 -- >>> fromString "ACTG" :: DNASequence
 -- ACTG
 instance (IsString a) => IsString (Sequence a) where
   fromString = Sequence . map fromString . map (\x -> [x])
 
+-- | Convert string to Nucleotide
 instance IsString Nucleotide where
   fromString = unsafeCharToNucleotide . (head)
 
--- |
 unsafeParseDNASequence :: String -> DNASequence
 unsafeParseDNASequence = Sequence . map unsafeCharToNucleotide
 
@@ -52,13 +52,17 @@ unsafeCharToNucleotide 'T' = T
 unsafeCharToNucleotide c = error $
     "Invalide nucleotide " <> show c <> " (should be one of " <> show allNucleotides <> ")"
 
+-- | List of all nucleotides
 allNucleotides :: [Nucleotide]
 allNucleotides = [minBound..maxBound]
 
--- |
+-- | Merge DNA sequence as a overlapping strings
 -- >>> mergeDNASequence "ACGTA" "GTAC"
 -- ACGTAC
-mergeDNASequence :: DNASequence -> DNASequence -> DNASequence
+mergeDNASequence
+  :: DNASequence -- ^ Left string
+  -> DNASequence -- ^ Right string
+  -> DNASequence -- ^ Merged strings
 mergeDNASequence (Sequence l) (Sequence r) = Sequence (merge l r [])
   where
     merge xs ys []
@@ -69,9 +73,9 @@ mergeDNASequence (Sequence l) (Sequence r) = Sequence (merge l r [])
         where
           lenXs = length xs
 
--- | Separate sequence to overlaping chunks
-chunk ::
-     Int -- ^ Length of chunk
+-- | Separate sequence to overlapping chunks
+chunk
+  :: Int -- ^ Length of chunk
   -> [a] -- ^ Original list
   -> [[a]] -- ^ List of chunks
 chunk n xs =
@@ -83,13 +87,15 @@ chunk n xs =
 
 -- | Separate DNASequence to overlaping chunks
 -- Wrapper of chunk
-splitByN ::
-     Int -- ^ Length of subsequence
+splitByN
+  :: Int -- ^ Length of subsequence
   -> Sequence a -- ^ Original sequence
   -> [Sequence a] -- ^ List of subsequences
 splitByN n (Sequence seq) = map Sequence (chunk n seq)
 
--- | Sequence to number
+-- | Convert sequence to number. 
+-- Sequence can be presented as n-base number. 
+-- So this method converts from n-base to 10-base number.
 sequenceToNumber :: (Enum a) => Sequence a -> Int
 sequenceToNumber (Sequence seq) =
   sum $
@@ -101,7 +107,9 @@ sequenceToNumber (Sequence seq) =
     maxNumber = maxBound :: Nucleotide
     base = fromEnum maxNumber + 1
 
--- | Number to sequence
+-- | Convert number to sequence. 
+-- Sequence can be presented as n-base number. 
+-- So this method converts from 10-base to n-base number.
 numberToSequence
   :: (Enum a)
   => Int -- ^ Length of result sequences
