@@ -10,22 +10,25 @@ import           Data.RankSelectArray.Class
 import           Data.RankSelectArray.VectorBitArray
 --import           Data.RankSelectArray.DenseArray
 import qualified Data.IntMap                         as IntMap
-import qualified Data.Vector                         as Vec
 
 import           Data.Bits                           (Bits (shiftL, shiftR, (.&.), (.|.)),
                                                       FiniteBits (finiteBitSize))
 import qualified Data.Bits                           as Bits
+import           HaskellWorks.Data.PackedVector
+import           HaskellWorks.Data.AtIndex
+import           Data.Int
+import           Prelude                             hiding (length)
 
 -- |
 data SDArray darray = SDArray
-  { bitsOffset    :: Int
-  , bitVectorSize :: BitArraySize
-  , upperBits     :: darray
-  , lowerBits     :: Vec.Vector Int -- TODO: replace Int with [log n / m] bits
-  } deriving (Eq)
+    { bitsOffset    :: Int
+    , bitVectorSize :: BitArraySize
+    , upperBits     :: darray
+    , lowerBits     :: PackedVector64
+    } deriving Eq
 
 countOnes :: SDArray darray -> Int
-countOnes = length . lowerBits
+countOnes = fromIntegral . toInteger . length . lowerBits
 
 type SDArray' = SDArray VectorBitArray
 
@@ -45,7 +48,7 @@ sdarrayGenerateEmpty
   => BitArraySize
   -> SDArray darray
 sdarrayGenerateEmpty _ = SDArray
-  { lowerBits = Vec.generate 0 (const 0)
+  { lowerBits = empty
   , upperBits = generateEmpty 0
   , bitVectorSize = 0
   , bitsOffset = 1
@@ -89,8 +92,9 @@ sdarrayFromOnes n m onesPos = SDArray
   where
     offsetLowerBit = ceiling (logBase 2 (fromIntegral n / fromIntegral m))
 
-    lowerBitsList = map (getLowerBits offsetLowerBit) onesPos
-    newLowerBits = Vec.fromList lowerBitsList
+    newLowerBitsList = map (fromIntegral . getLowerBits offsetLowerBit) onesPos
+    lowerBitsSize = fromIntegral offsetLowerBit
+    newLowerBits = fromList lowerBitsSize newLowerBitsList
 
     upperBitsList = map (getUpperBits offsetLowerBit) onesPos
     upperBitsPos = zipWith (+) [0..] upperBitsList
@@ -111,7 +115,7 @@ getLowerBits offset value = value .&. (ones `shiftR` (n - offset - 1))
     n = finiteBitSize ones
     ones = Bits.complement Bits.zeroBits `Bits.clearBit` (n - 1)
 
--- | Select in sdarray. 
+-- | Select in sdarray.
 -- Using formula select(i, B) = (select(i, H) − i) · 2^w + L[i].
 -- Where B is byte array, H array of upper bits, w number of lower bits, L array of lower bits.
 sdarraySelect
@@ -122,7 +126,9 @@ sdarraySelect
   -> Int
 sdarraySelect _ False _ = error "select for SDArray is not implemented (for 0)"
 sdarraySelect SDArray{..} True pos =
-  ((select upperBits True pos - (pos - 1)) `shiftL` bitsOffset) .|. lowerBits Vec.! (pos - 1)
+  ((select upperBits True pos - (pos - 1)) `shiftL` bitsOffset) .|. lowerBit
+  where
+    lowerBit = fromIntegral (toInteger (lowerBits !!! (fromIntegral (pos - 1))))
 
 -- | Rank in sdarray.
 --
@@ -140,9 +146,10 @@ sdarrayRank SDArray{..} True pos = getPos y' x'
     x' = y' - upBit
     j = getLowerBits bitsOffset pos
 
+    getPos :: Int -> Int -> Int
     getPos y x
       | not (getBit y upperBits) = x
-      | lowerBits Vec.! x >= j = if lowerBits Vec.! x == j then x + 1 else x
+      | (fromIntegral . toInteger) (lowerBits !!! (fromIntegral x)) >= j = if (fromIntegral . toInteger) (lowerBits !!! (fromIntegral x)) == j then x + 1 else x
       | otherwise = getPos (y + 1) (x + 1)
 
 
@@ -152,7 +159,7 @@ sdarrayGetBit
   => Int
   -> SDArray darray
   -> Bool
-sdarrayGetBit pos arr = if (rank arr True pos) - (rank arr True (pos - 1)) == 0 
-                        then False 
+sdarrayGetBit pos arr = if (rank arr True pos) - (rank arr True (pos - 1)) == 0
+                        then False
                         else True
 

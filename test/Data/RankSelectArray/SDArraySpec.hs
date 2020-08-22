@@ -2,12 +2,13 @@ module Data.RankSelectArray.SDArraySpec where
 
 import           Data.RankSelectArray.Class
 import           Data.RankSelectArray.SDArray
-import qualified Data.Vector           as Vec
+import qualified Data.Vector                    as Vec
+import qualified HaskellWorks.Data.PackedVector as PV
 import           Test.Hspec
 
 
 testBuildLower :: IO ()
-testBuildLower = lowerArr `shouldBe` Vec.fromList [1, 3]
+testBuildLower = lowerArr `shouldBe` PV.fromList 2 [1, 3]
   where
     bitArray = fromOnes 8 2 [5, 7] :: SDArray'
     lowerArr = lowerBits bitArray
@@ -41,7 +42,7 @@ testGetBit :: IO ()
 testGetBit = bit `shouldBe` False
   where
     bitArray = fromOnes 8 2 [5, 7] :: SDArray'
-    bit = sdarrayGetBit 6 bitArray 
+    bit = sdarrayGetBit 6 bitArray
 
 spec :: Spec
 spec =
