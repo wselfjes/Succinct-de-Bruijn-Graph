@@ -1,12 +1,12 @@
 -- |
 --
 -- This is an implementation of a Dense Array based on the paper [Practical Entropy-Compressed Rank/Select Dictionary](https://arxiv.org/abs/cs/0610001) by Daisuke Okanohara and Kunihiko Sadakane.
- 
+
 module Data.RankSelectArray.DenseArray where
 
 import           Data.RankSelectArray.Class
 import           Data.RankSelectArray.VectorBitArray
-import qualified Data.Vector as V
+import qualified Data.Vector                         as V
 
 
 -- | Constants for dense array
@@ -17,23 +17,30 @@ l2 = 2^16
 l3 :: Int
 l3 = 2^5
 
-data DenseArray = DenseArray 
-  { pArrays :: [VectorBitArray] 
-  , size    :: BitArraySize
-  } deriving (Eq)
+newtype PIndex = PIndex Int
+    deriving (Eq, Show)
+
+data DenseArray storage = DenseArray
+    { storage  :: storage
+    , size     :: BitArraySize
+    , pIndexes :: [PIndex]
+    }
+    deriving (Eq, Show)
 
 
-instance RankSelectArray DenseArray where
+instance RankSelectArray storage => RankSelectArray (DenseArray storage) where
   rank          = denseRank
   select        = denseSelect
   generateEmpty = denseGenerateEmpty
   setBits       = denseSetBits
---  fromOnes      = denseFromOnes
+  getSize       = size
+  getOneCount   = getOneCount . storage
 
 
 -- | Rank in dense array. Not implemented yet.
 denseRank
-  :: DenseArray
+  :: RankSelectArray storage
+  => DenseArray storage
   -> Bool
   -> Int
   -> Int
@@ -41,7 +48,7 @@ denseRank _ _ _ = 0
 
 -- | Select in dense array. Not implemented yet.
 denseSelect
-  :: DenseArray
+  :: DenseArray storage
   -> Bool
   -> Int
   -> Int
@@ -49,33 +56,39 @@ denseSelect _ _ _ = 0
 
 -- | Generate empty dense array.
 denseGenerateEmpty
-  :: BitArraySize
-  -> DenseArray
-denseGenerateEmpty size = DenseArray [] size
+  :: RankSelectArray storage
+  => BitArraySize
+  -> DenseArray storage
+denseGenerateEmpty size = DenseArray (generateEmpty size) size []
 
 -- | Set bits in dense array. Create new array.
+-- We first partition H into the blocks such that each block contains L ones respectively.
+-- Let Pl[0 . . . n/L − 1] be the bit arrays such that Pl[i] is the position of (iL + 1)-th one.
+-- We classify these blocks into two groups.
+-- If the length of block size (Pl[i] − Pl[i − 1]) is larger than L2, we store all the positions of ones explicitly in Sl.
+-- If the length of block size is smaller than L2, we store the each L3-th positions of ones in Ss. We can store these values in lg L2 bits.
 denseSetBits
-  :: DenseArray
+  :: RankSelectArray storage
+  => DenseArray storage
   -> [(Int, Bool)]
-  -> DenseArray
-denseSetBits (DenseArray _ size) ones = DenseArray pArrays size
+  -> DenseArray storage
+denseSetBits (DenseArray _ size pIndexes) bits = DenseArray storage size pIndexes
   where
-    pArrays = generatePArrays numPArrays (size `div` l1 - 1) ones []
-    numPArrays = length ones `div` l1
-    generatePArrays :: Int -> Int -> [(Int, Bool)] -> [VectorBitArray] -> [VectorBitArray]
-    generatePArrays 0 _ _ pArrays' = pArrays'
-    generateParrays numPArrays' pArraySize ones' pArrays' = pArrays'
-    
--- denseFromOnes
---   :: RankSelectArray arr
---   => BitArraySize
---   -> Int
---   -> [Int]
---   -> arr
--- denseFromOnes size numOnes ones = array
---   where
---     array = if numOnes < L1 
---             then fromOnes size numOnes ones :: VectorBitArray
---             else denseArray
---     denseArray = denseGenerateEmpty size `setBits` bits
---     bits = map (\i -> (i, True)) ones
+    ones = map fst (filter snd bits)
+    storage = fromOnes size (length ones) ones
+    pIndexes = generatePIndexes storage l1
+
+
+-- | Partition bit array int
+generatePIndexes
+  :: RankSelectArray storage
+  => storage
+  -> Int -- ^ Number of ones in the block
+  -> [PIndex]
+generatePIndexes storage l = map PIndex (go 0)
+  where
+    numberOfOnes = fromIntegral (getOneCount storage) :: Float
+    pIndexSize = ceiling (numberOfOnes / fromIntegral l) :: Int
+    go i
+      | i >= pIndexSize = []
+      | otherwise = select storage True (i * l + 1) : go (i + 1) 

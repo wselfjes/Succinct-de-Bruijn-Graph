@@ -36,6 +36,8 @@ instance RankSelectArray darray => RankSelectArray (SDArray darray) where
   rank          = sdarrayRank
   fromOnes      = sdarrayFromOnes
   getBit        = sdarrayGetBit
+  getSize       = bitVectorSize
+  getOneCount   = length . toOnes
 
   -- TODO: efficient getBit implementation?
 

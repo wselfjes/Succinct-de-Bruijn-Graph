@@ -10,6 +10,9 @@ class RankSelectArray a where
   generateEmpty :: BitArraySize -> a       -- ^ Generate bit array with all 0
   setBits       :: a -> [(Int, Bool)] -> a -- ^ Generate bit array from edges
 
+  getSize :: a -> BitArraySize -- ^ Return size of the bit array.
+  getOneCount :: a -> BitArraySize -- ^ Return number of ones.
+
   -- | Construct a bit-array from positions of 1s.
   -- Default implementation relies on 'generateEmpty' and 'setBits'
   -- however a more efficient implementation migth be used.
@@ -27,3 +30,4 @@ class RankSelectArray a where
   getBit i a = select a False k /= k
     where
       k = rank a False i
+
