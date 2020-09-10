@@ -6,7 +6,9 @@ module Data.RankSelectArray.DenseArray where
 
 import           Data.RankSelectArray.Class
 import           Data.RankSelectArray.VectorBitArray
+import           Data.List.Split
 import qualified Data.Vector                         as V
+
 
 
 -- | Constants for dense array
@@ -17,13 +19,17 @@ l2 = 2^16
 l3 :: Int
 l3 = 2^5
 
-newtype PIndex = PIndex Int
+newtype PIndex = PIndex {unPIndex :: Int}
+    deriving (Eq, Show)
+
+newtype Index = Index {unIndex :: Int}
     deriving (Eq, Show)
 
 data DenseArray storage = DenseArray
     { storage  :: storage
     , size     :: BitArraySize
     , pIndexes :: [PIndex]
+    , indexes  :: [[Index]]
     }
     deriving (Eq, Show)
 
@@ -59,7 +65,7 @@ denseGenerateEmpty
   :: RankSelectArray storage
   => BitArraySize
   -> DenseArray storage
-denseGenerateEmpty size = DenseArray (generateEmpty size) size []
+denseGenerateEmpty size = DenseArray (generateEmpty size) size [] []
 
 -- | Set bits in dense array. Create new array.
 -- We first partition H into the blocks such that each block contains L ones respectively.
@@ -72,12 +78,12 @@ denseSetBits
   => DenseArray storage
   -> [(Int, Bool)]
   -> DenseArray storage
-denseSetBits (DenseArray _ size pIndexes) bits = DenseArray storage size pIndexes
+denseSetBits (DenseArray _ size _ _) bits = DenseArray storage size pIndexes indexes
   where
     ones = map fst (filter snd bits)
     storage = fromOnes size (length ones) ones
     pIndexes = generatePIndexes storage l1
-
+    indexes = generateIndexes storage pIndexes
 
 -- | Partition bit array int
 generatePIndexes
@@ -85,10 +91,54 @@ generatePIndexes
   => storage
   -> Int -- ^ Number of ones in the block
   -> [PIndex]
-generatePIndexes storage l = map PIndex (go 0)
+generatePIndexes storage l = map PIndex ((go 0) ++ [getSize storage - 1])
   where
     numberOfOnes = fromIntegral (getOneCount storage) :: Float
     pIndexSize = ceiling (numberOfOnes / fromIntegral l) :: Int
     go i
       | i >= pIndexSize = []
-      | otherwise = select storage True (i * l + 1) : go (i + 1) 
+      | otherwise = select storage True (i * l + 1) : go (i + 1)
+
+-- | Sl is a simple position of ones
+blockToSl
+  :: RankSelectArray storage
+  => storage
+  -> (PIndex, PIndex) -- ^ Start and end of block
+  -> [Index]
+blockToSl storage (start, end) = map Index (go (unPIndex start))
+  where
+    go i
+      | i >= (unPIndex end) = []
+      | otherwise = if getBit i storage 
+                    then i : go (i + 1)
+                    else go (i + 1)
+
+-- | Ss is a simple position of ones
+blockToSs
+  :: RankSelectArray storage
+  => storage
+  -> (PIndex, PIndex) -- ^ Start and end of block
+  -> [Index]
+blockToSs storage (start, end) = map Index (concatMap (drop (l3 - 1)) (chunksOf l3 (go (unPIndex start))))
+  where
+    go i
+      | i >= (unPIndex end) = []
+      | otherwise = if getBit i storage 
+                    then i : go (i + 1)
+                    else go (i + 1)
+
+-- | Generate two indexes. Ss for dense block and Sl for sparse block
+generateIndexes
+  :: RankSelectArray storage
+  => storage
+  -> [PIndex]
+  -> [[Index]]
+generateIndexes storage pIndex = go 1
+  where
+    go :: Int -> [[Index]]
+    go i
+      | i >= length pIndex = []
+      | otherwise = generateBlock (pIndex !! (i - 1), pIndex !! i): go (i + 1)
+        where
+            generateBlock (start, end) = if (unPIndex end) - (unPIndex start) < l2 then blockToSl storage (start, end) else blockToSs storage (start, end)
+    
