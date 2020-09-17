@@ -4,9 +4,9 @@
 
 module Data.RankSelectArray.DenseArray where
 
+import           Data.List.Split
 import           Data.RankSelectArray.Class
 import           Data.RankSelectArray.VectorBitArray
-import           Data.List.Split
 import qualified Data.Vector                         as V
 
 
@@ -18,6 +18,12 @@ l2 :: Int
 l2 = 2^16
 l3 :: Int
 l3 = 2^5
+
+new :: DenseArray VectorBitArray
+new = setBits e [(0, True), (1, True), (2, True), (3, True), (5, True), (9, True), (12, True), (14, True)]
+  where
+    e = denseGenerateEmpty 16 :: DenseArray VectorBitArray
+
 
 newtype PIndex = PIndex {unPIndex :: Int}
     deriving (Eq, Show)
@@ -50,15 +56,46 @@ denseRank
   -> Bool
   -> Int
   -> Int
-denseRank _ _ _ = 0
+denseRank _ _ _ = error "Rank for dense array not implemented."
 
 -- | Select in dense array. Not implemented yet.
 denseSelect
-  :: DenseArray storage
+  :: RankSelectArray storage
+  => DenseArray storage
   -> Bool
   -> Int
   -> Int
-denseSelect _ _ _ = 0
+denseSelect arr False _ = error "Select for zero values not implemented."
+denseSelect (DenseArray storage size pIndexes indexes) True i' = unIndex pos
+  where
+    i = i' - 1
+    indexOfP = floor (fromIntegral i / fromIntegral l1)
+    pIndex = pIndexes !! indexOfP
+    pos = if unPIndex (pIndexes !! (indexOfP + 1)) - unPIndex pIndex < l2 then searchInSlBlock (indexes !! indexOfP) (i - unPIndex pIndex) else searchInSsBlock (indexes !! indexOfP) storage (i - unPIndex pIndex + 1)
+
+searchInSlBlock
+  :: [Index]
+  -> Int
+  -> Index
+searchInSlBlock indexes i = indexes !! i
+
+searchInSsBlock
+  :: RankSelectArray storage
+  => [Index]
+  -> storage
+  -> Int
+  -> Index
+searchInSsBlock indexes storage ind = pos
+  where
+    i = ind - l3Index * l3 + 1
+    pos = Index (go 0 l3Value)
+    l3Index = floor (fromIntegral ind / fromIntegral l3)
+    l3Value = unIndex (indexes !! l3Index)
+    go accumulator i'
+      | accumulator == i = i' - 1
+      | getBit i' storage = go (accumulator + 1) (i' + 1)
+      | otherwise = go accumulator (i' + 1)
+
 
 -- | Generate empty dense array.
 denseGenerateEmpty
@@ -109,23 +146,22 @@ blockToSl storage (start, end) = map Index (go (unPIndex start))
   where
     go i
       | i >= (unPIndex end) = []
-      | otherwise = if getBit i storage 
+      | otherwise = if getBit i storage
                     then i : go (i + 1)
                     else go (i + 1)
 
--- | Ss is a simple position of ones
+-- | Ss position of each l3 one.
 blockToSs
   :: RankSelectArray storage
   => storage
   -> (PIndex, PIndex) -- ^ Start and end of block
   -> [Index]
-blockToSs storage (start, end) = map Index (concatMap (drop (l3 - 1)) (chunksOf l3 (go (unPIndex start))))
+blockToSs storage (start, end) = map Index (concatMap (take (l3 - 1)) (chunksOf l3 (go (unPIndex start))))
   where
     go i
       | i >= (unPIndex end) = []
-      | otherwise = if getBit i storage 
-                    then i : go (i + 1)
-                    else go (i + 1)
+      | getBit i storage = i : go (i + 1)
+      | otherwise = go (i + 1)
 
 -- | Generate two indexes. Ss for dense block and Sl for sparse block
 generateIndexes
@@ -141,4 +177,4 @@ generateIndexes storage pIndex = go 1
       | otherwise = generateBlock (pIndex !! (i - 1), pIndex !! i): go (i + 1)
         where
             generateBlock (start, end) = if (unPIndex end) - (unPIndex start) < l2 then blockToSl storage (start, end) else blockToSs storage (start, end)
-    
+
