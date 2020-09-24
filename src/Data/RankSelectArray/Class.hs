@@ -1,5 +1,8 @@
 module Data.RankSelectArray.Class where
 
+
+import         Data.List.Unique
+
 type BitArraySize = Int
 
 -- | Class for represent Bit Array, may be implicit bit array such as Vector Bool, or explicit like sdarrays
@@ -22,7 +25,7 @@ class RankSelectArray a where
                 -> a
   fromOnes n _ ones = generateEmpty n `setBits` bits
     where
-      bits = map (\i -> (i, True)) ones
+      bits = map (\i -> (i, True)) (uniq ones)
 
   -- | Get bit at a given index. Default implementation relies on 'rank' and 'select',
   -- however a more efficient implementation can often be used.

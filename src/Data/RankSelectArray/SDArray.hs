@@ -24,6 +24,8 @@ data SDArray darray = SDArray
   , lowerBits     :: Vec.Vector Int -- TODO: replace Int with [log n / m] bits
   } deriving (Eq)
 
+
+
 countOnes :: SDArray darray -> Int
 countOnes = length . lowerBits
 
@@ -37,9 +39,12 @@ instance RankSelectArray darray => RankSelectArray (SDArray darray) where
   fromOnes      = sdarrayFromOnes
   getBit        = sdarrayGetBit
   getSize       = bitVectorSize
-  getOneCount   = length . toOnes
+  getOneCount   = countOnes
 
   -- TODO: efficient getBit implementation?
+
+instance (Show darray, RankSelectArray darray) => Show (SDArray darray) where
+  show v = "Vector size " ++ show (bitVectorSize v) ++ "\nOnes count " ++ show (getOneCount v) ++ "\nOnse " ++ show (toOnes v)
 
 -- | Create empty sdarray.
 sdarrayGenerateEmpty
