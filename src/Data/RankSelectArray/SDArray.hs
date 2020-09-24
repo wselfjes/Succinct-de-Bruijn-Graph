@@ -44,7 +44,7 @@ instance RankSelectArray darray => RankSelectArray (SDArray darray) where
   -- TODO: efficient getBit implementation?
 
 instance (Show darray, RankSelectArray darray) => Show (SDArray darray) where
-  show v = "Vector size " ++ show (bitVectorSize v) ++ "\nOnes count " ++ show (getOneCount v) ++ "\nOnse " ++ show (toOnes v)
+  show v = "Vector size " ++ show (bitVectorSize v) ++ "\nOnes count " ++ show (getOneCount v) ++ "\nOnes " ++ show (toOnes v)
 
 -- | Create empty sdarray.
 sdarrayGenerateEmpty

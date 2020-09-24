@@ -1,3 +1,4 @@
+{-# LANGUAGE RecordWildCards #-}
 -- |
 --
 -- This is an implementation of a Dense Array based on the paper [Practical Entropy-Compressed Rank/Select Dictionary](https://arxiv.org/abs/cs/0610001) by Daisuke Okanohara and Kunihiko Sadakane.
@@ -32,10 +33,12 @@ newtype Index = Index {unIndex :: Int}
     deriving (Eq, Show)
 
 data DenseArray storage = DenseArray
-    { storage  :: storage
-    , size     :: BitArraySize
-    , pIndexes :: [PIndex]
-    , indexes  :: [[Index]]
+    { storage         :: storage
+    , size            :: BitArraySize
+    , pIndexes        :: [PIndex]
+    , indexes         :: [[Index]]
+    , reversePIndexes :: [PIndex]
+    , reverseIndexes  :: [[Index]]
     }
     deriving (Eq, Show)
 
@@ -65,13 +68,14 @@ denseSelect
   -> Bool
   -> Int
   -> Int
-denseSelect arr False _ = error "Select for zero values not implemented."
-denseSelect (DenseArray storage size pIndexes indexes) True i' = unIndex pos
+denseSelect DenseArray{..} forOnes i' = unIndex pos
   where
     i = i' - 1
     indexOfP = floor (fromIntegral i / fromIntegral l1)
     pIndex = pIndexes !! indexOfP
-    pos = if unPIndex (pIndexes !! (indexOfP + 1)) - unPIndex pIndex < l2 then searchInSlBlock (indexes !! indexOfP) (i - unPIndex pIndex) else searchInSsBlock (indexes !! indexOfP) storage (i - unPIndex pIndex + 1)
+    pos = if unPIndex (pIndexes !! (indexOfP + 1)) - unPIndex pIndex < l2 
+          then searchInSlBlock (indexes !! indexOfP) (i - unPIndex pIndex) 
+          else searchInSsBlock (indexes !! indexOfP) storage (i - unPIndex pIndex + 1)
 
 searchInSlBlock
   :: [Index]
@@ -102,7 +106,7 @@ denseGenerateEmpty
   :: RankSelectArray storage
   => BitArraySize
   -> DenseArray storage
-denseGenerateEmpty size = DenseArray (generateEmpty size) size [] []
+denseGenerateEmpty size = DenseArray (generateEmpty size) size [] [] [] []
 
 -- | Set bits in dense array. Create new array.
 -- We first partition H into the blocks such that each block contains L ones respectively.
@@ -115,38 +119,42 @@ denseSetBits
   => DenseArray storage
   -> [(Int, Bool)]
   -> DenseArray storage
-denseSetBits (DenseArray _ size _ _) bits = DenseArray storage size pIndexes indexes
+denseSetBits DenseArray{..} bits = DenseArray storage size pIndexes indexes reversePIndexes reverseIndexes
   where
     ones = map fst (filter snd bits)
     storage = fromOnes size (length ones) ones
-    pIndexes = generatePIndexes storage l1
-    indexes = generateIndexes storage pIndexes
+    pIndexes = generatePIndexes storage l1 True
+    indexes = generateIndexes storage pIndexes False
+    reversePIndexes = generatePIndexes storage l1 False
+    reverseIndexes = generateIndexes storage pIndexes False
 
 -- | Partition bit array int
 generatePIndexes
   :: RankSelectArray storage
   => storage
   -> Int -- ^ Number of ones in the block
+  -> Bool
   -> [PIndex]
-generatePIndexes storage l = map PIndex ((go 0) ++ [getSize storage - 1])
+generatePIndexes storage l forOnes = map PIndex ((go 0) ++ [getSize storage - 1])
   where
     numberOfOnes = fromIntegral (getOneCount storage) :: Float
     pIndexSize = ceiling (numberOfOnes / fromIntegral l) :: Int
     go i
       | i >= pIndexSize = []
-      | otherwise = select storage True (i * l + 1) : go (i + 1)
+      | otherwise = select storage forOnes (i * l + 1) : go (i + 1)
 
 -- | Sl is a simple position of ones
 blockToSl
   :: RankSelectArray storage
   => storage
   -> (PIndex, PIndex) -- ^ Start and end of block
+  -> Bool
   -> [Index]
-blockToSl storage (start, end) = map Index (go (unPIndex start))
+blockToSl storage (start, end) forOnes = map Index (go (unPIndex start))
   where
     go i
       | i >= (unPIndex end) = []
-      | otherwise = if getBit i storage
+      | otherwise = if getBit i storage == forOnes
                     then i : go (i + 1)
                     else go (i + 1)
 
@@ -155,12 +163,13 @@ blockToSs
   :: RankSelectArray storage
   => storage
   -> (PIndex, PIndex) -- ^ Start and end of block
+  -> Bool
   -> [Index]
-blockToSs storage (start, end) = map Index (concatMap (take (l3 - 1)) (chunksOf l3 (go (unPIndex start))))
+blockToSs storage (start, end) forOnes = map Index (concatMap (take (l3 - 1)) (chunksOf l3 (go (unPIndex start))))
   where
     go i
       | i >= (unPIndex end) = []
-      | getBit i storage = i : go (i + 1)
+      | getBit i storage == forOnes = i : go (i + 1)
       | otherwise = go (i + 1)
 
 -- | Generate two indexes. Ss for dense block and Sl for sparse block
@@ -168,13 +177,15 @@ generateIndexes
   :: RankSelectArray storage
   => storage
   -> [PIndex]
+  -> Bool
   -> [[Index]]
-generateIndexes storage pIndex = go 1
+generateIndexes storage pIndex forOnes = go 1
   where
     go :: Int -> [[Index]]
     go i
       | i >= length pIndex = []
       | otherwise = generateBlock (pIndex !! (i - 1), pIndex !! i): go (i + 1)
         where
-            generateBlock (start, end) = if (unPIndex end) - (unPIndex start) < l2 then blockToSl storage (start, end) else blockToSs storage (start, end)
-
+            generateBlock (start, end) = if (unPIndex end) - (unPIndex start) < l2 
+                                        then blockToSl storage (start, end) forOnes 
+                                        else blockToSs storage (start, end) forOnes

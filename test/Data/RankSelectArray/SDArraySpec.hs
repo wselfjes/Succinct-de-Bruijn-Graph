@@ -4,6 +4,8 @@ import           Data.List.Unique
 import           Data.RankSelectArray.Class
 import           Data.RankSelectArray.ClassSpecGenerator
 import           Data.RankSelectArray.SDArray
+import           Data.RankSelectArray.VectorBitArray
+import           Data.RankSelectArray.DenseArray
 import qualified Data.Vector           as Vec
 import           Test.Hspec
 import           Test.QuickCheck
@@ -43,7 +45,7 @@ spec =
       it "Build lower bits" testBuildLower
       it "Build upper bits" testBuildUpper
       it "Build size" testBuildSize
-    makeSpec (arbitrary :: Gen SDArray') "SDarray"
-  
+    makeSpec (arbitrary :: Gen SDArray') "SDarray with VectorBitArray"
+    makeSpec (arbitrary :: Gen (SDArray (DenseArray VectorBitArray))) "SDarray with DenseArray"
 
 
