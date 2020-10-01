@@ -45,7 +45,6 @@ instance RankSelectArray storage => RankSelectArray (DenseArray storage) where
   setBits       = denseSetBits
   getSize       = size
   getOneCount   = getOneCount . storage
-  getBit i      = (getBit i) . storage
 
 -- * Constructors 
 

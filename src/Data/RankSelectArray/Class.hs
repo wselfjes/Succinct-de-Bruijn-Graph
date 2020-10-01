@@ -35,7 +35,7 @@ class RankSelectArray a where
   -- | Get bit at a given index. Default implementation relies on 'rank' and 'select',
   -- however a more efficient implementation can often be used.
   getBit :: Int -> a -> Bool
-  getBit i a = select a False k /= k
+  getBit i a = select a False k /= i
     where
       k = rank a False i
 
