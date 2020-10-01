@@ -22,7 +22,7 @@ data SDArray darray = SDArray
   , bitVectorSize :: BitArraySize
   , upperBits     :: darray
   , lowerBits     :: Vec.Vector Int -- TODO: replace Int with [log n / m] bits
-  } deriving (Eq)
+  } deriving (Eq, Show)
 
 
 
@@ -42,9 +42,6 @@ instance RankSelectArray darray => RankSelectArray (SDArray darray) where
   getOneCount   = countOnes
 
   -- TODO: efficient getBit implementation?
-
-instance (Show darray, RankSelectArray darray) => Show (SDArray darray) where
-  show v = "Vector size " ++ show (bitVectorSize v) ++ "\nOnes count " ++ show (getOneCount v) ++ "\nOnes " ++ show (toOnes v)
 
 -- | Create empty sdarray.
 sdarrayGenerateEmpty
@@ -74,11 +71,6 @@ sdarraySetBits sdarray elems = fromOnes
     newOnesMap = intMapElems `IntMap.union` intMapOnes
     newOnes = map fst (filter snd (IntMap.toList newOnesMap))
 
--- | Convert sdarray to a list of positions of ones in input array.
-toOnes :: RankSelectArray darray => SDArray darray -> [Int]
-toOnes arr = map (select arr True) [1..m]
-  where
-    m = countOnes arr
 
 -- | Convert list of positions of one to sdarray.
 sdarrayFromOnes
@@ -159,7 +151,5 @@ sdarrayGetBit
   => Int
   -> SDArray darray
   -> Bool
-sdarrayGetBit pos arr = if (rank arr True pos) - (rank arr True (pos - 1)) == 0 
-                        then False 
-                        else True
+sdarrayGetBit pos arr = (rank arr True pos) - (rank arr True (pos - 1)) /= 0 
 

@@ -118,7 +118,7 @@ size = length . rsValues
 -- ** Convert 'RankSelectMap' to list
 
 keys :: (Int -> k) -> RankSelectMap k v -> [k]
-keys fromInt = map fromInt . SDArray.toOnes . rsBitmap
+keys fromInt = map fromInt . RankSelectArray.toOnes . rsBitmap
 
 elems :: RankSelectMap k v -> [v]
 elems = Vector.toList . rsValues

@@ -91,7 +91,7 @@ size = length . SDArray.lowerBits . rsBitmap
 -- ** Convert 'RankSelectSet' to list
 
 toList :: (Int -> a) -> RankSelectSet a -> [a]
-toList fromInt = map fromInt . SDArray.toOnes . rsBitmap
+toList fromInt = map fromInt . RankSelectArray.toOnes . rsBitmap
 
 toListEnum :: Enum a => RankSelectSet a -> [a]
 toListEnum = toList toEnum

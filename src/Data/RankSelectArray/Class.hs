@@ -26,6 +26,11 @@ class RankSelectArray a where
   fromOnes n _ ones = generateEmpty n `setBits` bits
     where
       bits = map (\i -> (i, True)) (uniq ones)
+  -- | Convert RankSelect array to a list of positions of ones in input array.
+  toOnes :: a -> [Int]
+  toOnes arr = map (select arr True) [1..m]
+    where
+      m = getOneCount arr
 
   -- | Get bit at a given index. Default implementation relies on 'rank' and 'select',
   -- however a more efficient implementation can often be used.

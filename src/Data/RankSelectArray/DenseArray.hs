@@ -6,6 +6,7 @@
 module Data.RankSelectArray.DenseArray where
 
 import           Data.List.Split
+import           Data.List.Unique
 import           Data.RankSelectArray.Class
 import           Data.RankSelectArray.VectorBitArray
 import qualified Data.Vector                         as V
@@ -19,11 +20,6 @@ l2 :: Int
 l2 = 2^16
 l3 :: Int
 l3 = 2^5
-
-new :: DenseArray VectorBitArray
-new = setBits e [(0, True), (1, True), (2, True), (3, True), (5, True), (9, True), (12, True), (14, True)]
-  where
-    e = denseGenerateEmpty 16 :: DenseArray VectorBitArray
 
 
 newtype PIndex = PIndex {unPIndex :: Int}
@@ -42,7 +38,6 @@ data DenseArray storage = DenseArray
     }
     deriving (Eq, Show)
 
-
 instance RankSelectArray storage => RankSelectArray (DenseArray storage) where
   rank          = denseRank
   select        = denseSelect
@@ -50,56 +45,9 @@ instance RankSelectArray storage => RankSelectArray (DenseArray storage) where
   setBits       = denseSetBits
   getSize       = size
   getOneCount   = getOneCount . storage
+  getBit i      = (getBit i) . storage
 
-
--- | Rank in dense array. Not implemented yet.
-denseRank
-  :: RankSelectArray storage
-  => DenseArray storage
-  -> Bool
-  -> Int
-  -> Int
-denseRank _ _ _ = error "Rank for dense array not implemented."
-
--- | Select in dense array. Not implemented yet.
-denseSelect
-  :: RankSelectArray storage
-  => DenseArray storage
-  -> Bool
-  -> Int
-  -> Int
-denseSelect DenseArray{..} forOnes i' = unIndex pos
-  where
-    i = i' - 1
-    indexOfP = floor (fromIntegral i / fromIntegral l1)
-    pIndex = pIndexes !! indexOfP
-    pos = if unPIndex (pIndexes !! (indexOfP + 1)) - unPIndex pIndex < l2 
-          then searchInSlBlock (indexes !! indexOfP) (i - unPIndex pIndex) 
-          else searchInSsBlock (indexes !! indexOfP) storage (i - unPIndex pIndex + 1)
-
-searchInSlBlock
-  :: [Index]
-  -> Int
-  -> Index
-searchInSlBlock indexes i = indexes !! i
-
-searchInSsBlock
-  :: RankSelectArray storage
-  => [Index]
-  -> storage
-  -> Int
-  -> Index
-searchInSsBlock indexes storage ind = pos
-  where
-    i = ind - l3Index * l3 + 1
-    pos = Index (go 0 l3Value)
-    l3Index = floor (fromIntegral ind / fromIntegral l3)
-    l3Value = unIndex (indexes !! l3Index)
-    go accumulator i'
-      | accumulator == i = i' - 1
-      | getBit i' storage = go (accumulator + 1) (i' + 1)
-      | otherwise = go accumulator (i' + 1)
-
+-- * Constructors 
 
 -- | Generate empty dense array.
 denseGenerateEmpty
@@ -124,9 +72,9 @@ denseSetBits DenseArray{..} bits = DenseArray storage size pIndexes indexes reve
     ones = map fst (filter snd bits)
     storage = fromOnes size (length ones) ones
     pIndexes = generatePIndexes storage l1 True
-    indexes = generateIndexes storage pIndexes False
+    indexes = generateIndexes storage pIndexes True
     reversePIndexes = generatePIndexes storage l1 False
-    reverseIndexes = generateIndexes storage pIndexes False
+    reverseIndexes = generateIndexes storage reversePIndexes False
 
 -- | Partition bit array int
 generatePIndexes
@@ -138,7 +86,10 @@ generatePIndexes
 generatePIndexes storage l forOnes = map PIndex ((go 0) ++ [getSize storage - 1])
   where
     numberOfOnes = fromIntegral (getOneCount storage) :: Float
-    pIndexSize = ceiling (numberOfOnes / fromIntegral l) :: Int
+    numberOfRequiredElems = if forOnes
+                           then numberOfOnes
+                           else ((fromIntegral . getSize) storage) - numberOfOnes
+    pIndexSize = ceiling (numberOfRequiredElems / fromIntegral l) :: Int
     go i
       | i >= pIndexSize = []
       | otherwise = select storage forOnes (i * l + 1) : go (i + 1)
@@ -153,7 +104,7 @@ blockToSl
 blockToSl storage (start, end) forOnes = map Index (go (unPIndex start))
   where
     go i
-      | i >= (unPIndex end) = []
+      | i > (unPIndex end) = []
       | otherwise = if getBit i storage == forOnes
                     then i : go (i + 1)
                     else go (i + 1)
@@ -179,13 +130,85 @@ generateIndexes
   -> [PIndex]
   -> Bool
   -> [[Index]]
-generateIndexes storage pIndex forOnes = go 1
+generateIndexes storage pIndexes forOnes = go 1
   where
     go :: Int -> [[Index]]
     go i
-      | i >= length pIndex = []
-      | otherwise = generateBlock (pIndex !! (i - 1), pIndex !! i): go (i + 1)
+      | i >= length pIndexes = []
+      | otherwise = generateBlock (pIndexes !! (i - 1), pIndexes !! i): go (i + 1)
         where
             generateBlock (start, end) = if (unPIndex end) - (unPIndex start) < l2 
                                         then blockToSl storage (start, end) forOnes 
                                         else blockToSs storage (start, end) forOnes
+
+-- | Rank in dense array. 
+denseRank
+  :: RankSelectArray storage
+  => DenseArray storage
+  -> Bool
+  -> Int
+  -> Int
+denseRank DenseArray{..} forOnes pos = rank storage forOnes pos --number
+  where
+    number = numberFromPIndexes + numberFromIndexes
+    pIndexesTemp = if forOnes
+                   then pIndexes
+                   else reversePIndexes
+    indexesTemp = if forOnes
+                  then indexes
+                  else reverseIndexes
+    smallPIndexes = (uniq . takeWhile (<= pos) . map unPIndex) pIndexesTemp
+    pIndex = last smallPIndexes
+    indexOfP = length smallPIndexes - 1
+    numberFromPIndexes = l1 * indexOfP
+    numberFromIndexes = if unPIndex (pIndexesTemp !! (indexOfP + 1)) - pIndex < l2  
+                        then (length . takeWhile (<=pos) . map unIndex) (indexesTemp !! indexOfP)
+                        else l3 * (length . takeWhile (<=pos) . map unIndex) (indexesTemp !! indexOfP)
+
+-- | Select in dense array.
+denseSelect
+  :: RankSelectArray storage
+  => DenseArray storage
+  -> Bool
+  -> Int
+  -> Int
+denseSelect _ _ 0 = -1
+denseSelect DenseArray{..} forOnes i = unIndex pos
+  where
+    pIndexesTemp = if forOnes
+                   then pIndexes
+                   else reversePIndexes
+    indexesTemp = if forOnes
+                  then indexes
+                  else reverseIndexes
+    indexOfP = floor (fromIntegral i / fromIntegral l1)
+    pIndex = pIndexesTemp !! indexOfP
+    pos = if unPIndex (pIndexesTemp !! (indexOfP + 1)) - unPIndex pIndex < l2 
+          then searchInSlBlock (indexesTemp !! indexOfP) (i - indexOfP * l1 - 1) 
+          else searchInSsBlock (indexesTemp !! indexOfP) storage (i - indexOfP * l1 - 1) forOnes
+
+searchInSlBlock
+  :: [Index]
+  -> Int
+  -> Index
+searchInSlBlock indexes i = indexes !! i
+
+searchInSsBlock
+  :: RankSelectArray storage
+  => [Index]
+  -> storage
+  -> Int
+  -> Bool
+  -> Index
+searchInSsBlock indexes storage ind forOnes = pos
+  where
+    i = ind - l3Index * l3 + 1
+    pos = Index (go 0 l3Value)
+    l3Index = floor (fromIntegral ind / fromIntegral l3)
+    l3Value = unIndex (indexes !! l3Index)
+    go accumulator i'
+      | accumulator == i = i' - 1
+      | getBit i' storage == forOnes = go (accumulator + 1) (i' + 1)
+      | otherwise = go accumulator (i' + 1)
+
+
