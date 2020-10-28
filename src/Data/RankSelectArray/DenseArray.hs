@@ -6,9 +6,7 @@
 module Data.RankSelectArray.DenseArray where
 
 import           Data.List.Split
-import           Data.List.Unique
 import           Data.RankSelectArray.Class
-import           Data.RankSelectArray.VectorBitArray
 import qualified Data.Vector                         as V
 
 
@@ -31,10 +29,10 @@ newtype Index = Index {unIndex :: Int}
 data DenseArray storage = DenseArray
     { storage         :: storage
     , size            :: BitArraySize
-    , pIndexes        :: [PIndex]
-    , indexes         :: [[Index]]
-    , reversePIndexes :: [PIndex]
-    , reverseIndexes  :: [[Index]]
+    , pIndexes        :: V.Vector PIndex
+    , indexes         :: V.Vector (V.Vector Index)
+    , reversePIndexes :: V.Vector PIndex
+    , reverseIndexes  :: V.Vector (V.Vector Index)
     }
     deriving (Eq, Show)
 
@@ -53,7 +51,7 @@ denseGenerateEmpty
   :: RankSelectArray storage
   => BitArraySize
   -> DenseArray storage
-denseGenerateEmpty size = DenseArray (generateEmpty size) size [] [] [] []
+denseGenerateEmpty size = DenseArray (generateEmpty size) size V.empty V.empty V.empty V.empty 
 
 -- | Set bits in dense array. Create new array.
 -- We first partition H into the blocks such that each block contains L ones respectively.
@@ -81,17 +79,15 @@ generatePIndexes
   => storage
   -> Int -- ^ Number of ones in the block
   -> Bool
-  -> [PIndex]
-generatePIndexes storage l forOnes = map PIndex ((go 0) ++ [getSize storage - 1])
+  -> V.Vector PIndex
+generatePIndexes storage l forOnes = V.fromList (map PIndex (pIndexes ++ [getSize storage - 1]))
   where
     numberOfOnes = fromIntegral (getOneCount storage) :: Float
     numberOfRequiredElems = if forOnes
                            then numberOfOnes
                            else ((fromIntegral . getSize) storage) - numberOfOnes
     pIndexSize = ceiling (numberOfRequiredElems / fromIntegral l) :: Int
-    go i
-      | i >= pIndexSize = []
-      | otherwise = select storage forOnes (i * l + 1) : go (i + 1)
+    pIndexes = map (\i -> select storage forOnes (i * l + 1)) [1 .. pIndexSize]
 
 -- | Sl is a simple position of ones
 blockToSl
@@ -126,19 +122,15 @@ blockToSs storage (start, end) forOnes = map Index (concatMap (take (l3 - 1)) (c
 generateIndexes
   :: RankSelectArray storage
   => storage
-  -> [PIndex]
+  -> V.Vector PIndex
   -> Bool
-  -> [[Index]]
-generateIndexes storage pIndexes forOnes = go 1
+  -> V.Vector (V.Vector Index)
+generateIndexes storage pIndexes forOnes = V.fromList (map V.fromList indexes)
   where
-    go :: Int -> [[Index]]
-    go i
-      | i >= length pIndexes = []
-      | otherwise = generateBlock (pIndexes !! (i - 1), pIndexes !! i): go (i + 1)
-        where
-            generateBlock (start, end) = if (unPIndex end) - (unPIndex start) < l2 
-                                        then blockToSl storage (start, end) forOnes 
-                                        else blockToSs storage (start, end) forOnes
+    indexes = map (\i -> generateBlock (pIndexes V.! (i - 1), pIndexes V.! i)) [1 .. length pIndexes]
+    generateBlock (start, end) = if (unPIndex end) - (unPIndex start) < l2 
+                                 then blockToSl storage (start, end) forOnes 
+                                 else blockToSs storage (start, end) forOnes
 
 -- | Rank in dense array. 
 denseRank
@@ -156,13 +148,13 @@ denseRank DenseArray{..} forOnes pos = rank storage forOnes pos --number
     indexesTemp = if forOnes
                   then indexes
                   else reverseIndexes
-    smallPIndexes = (uniq . takeWhile (<= pos) . map unPIndex) pIndexesTemp
-    pIndex = last smallPIndexes
+    smallPIndexes = (V.uniq . V.takeWhile (<= pos) . V.map unPIndex) pIndexesTemp
+    pIndex = V.last smallPIndexes
     indexOfP = length smallPIndexes - 1
     numberFromPIndexes = l1 * indexOfP
-    numberFromIndexes = if unPIndex (pIndexesTemp !! (indexOfP + 1)) - pIndex < l2  
-                        then (length . takeWhile (<=pos) . map unIndex) (indexesTemp !! indexOfP)
-                        else l3 * (length . takeWhile (<=pos) . map unIndex) (indexesTemp !! indexOfP)
+    numberFromIndexes = if unPIndex (pIndexesTemp V.! (indexOfP + 1)) - pIndex < l2  
+                        then (length . V.takeWhile (<=pos) . V.map unIndex) (indexesTemp V.! indexOfP)
+                        else l3 * (length . V.takeWhile (<=pos) . V.map unIndex) (indexesTemp V.! indexOfP)
 
 -- | Select in dense array.
 denseSelect
@@ -181,20 +173,20 @@ denseSelect DenseArray{..} forOnes i = unIndex pos
                   then indexes
                   else reverseIndexes
     indexOfP = floor (fromIntegral i / fromIntegral l1)
-    pIndex = pIndexesTemp !! indexOfP
-    pos = if unPIndex (pIndexesTemp !! (indexOfP + 1)) - unPIndex pIndex < l2 
-          then searchInSlBlock (indexesTemp !! indexOfP) (i - indexOfP * l1 - 1) 
-          else searchInSsBlock (indexesTemp !! indexOfP) storage (i - indexOfP * l1 - 1) forOnes
+    pIndex = pIndexesTemp V.! indexOfP
+    pos = if unPIndex (pIndexesTemp V.! (indexOfP + 1)) - unPIndex pIndex < l2 
+          then searchInSlBlock (indexesTemp V.! indexOfP) (i - indexOfP * l1 - 1) 
+          else searchInSsBlock (indexesTemp V.! indexOfP) storage (i - indexOfP * l1 - 1) forOnes
 
 searchInSlBlock
-  :: [Index]
+  :: V.Vector Index
   -> Int
   -> Index
-searchInSlBlock indexes i = indexes !! i
+searchInSlBlock indexes i = indexes V.! i
 
 searchInSsBlock
   :: RankSelectArray storage
-  => [Index]
+  => V.Vector Index
   -> storage
   -> Int
   -> Bool
@@ -204,7 +196,7 @@ searchInSsBlock indexes storage ind forOnes = pos
     i = ind - l3Index * l3 + 1
     pos = Index (go 0 l3Value)
     l3Index = floor (fromIntegral ind / fromIntegral l3)
-    l3Value = unIndex (indexes !! l3Index)
+    l3Value = unIndex (indexes V.! l3Index)
     go accumulator i'
       | accumulator == i = i' - 1
       | getBit i' storage == forOnes = go (accumulator + 1) (i' + 1)
