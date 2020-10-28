@@ -87,7 +87,7 @@ generatePIndexes storage l forOnes = V.fromList (map PIndex (pIndexes ++ [getSiz
                            then numberOfOnes
                            else ((fromIntegral . getSize) storage) - numberOfOnes
     pIndexSize = ceiling (numberOfRequiredElems / fromIntegral l) :: Int
-    pIndexes = map (\i -> select storage forOnes (i * l + 1)) [1 .. pIndexSize]
+    pIndexes = map (\i -> select storage forOnes (i * l + 1)) [0 .. pIndexSize-1]
 
 -- | Sl is a simple position of ones
 blockToSl
