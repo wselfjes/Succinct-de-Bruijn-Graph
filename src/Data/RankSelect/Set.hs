@@ -84,7 +84,7 @@ capacity = SDArray.bitVectorSize . rsBitmap
 -- >>> size ([2, 3, 5, 7] :: RankSelectSet Int8)
 -- 4
 size :: RankSelectSet a -> Int
-size = length . SDArray.lowerBits . rsBitmap
+size = SDArray.countOnes . rsBitmap
 
 -- * Conversion to and from lists
 
