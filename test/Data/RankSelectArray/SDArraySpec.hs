@@ -7,7 +7,8 @@ import           Data.RankSelectArray.ClassSpecGenerator
 import           Data.RankSelectArray.SDArray
 import           Data.RankSelectArray.VectorBitArray
 import           Data.RankSelectArray.DenseArray
-import qualified Data.Vector           as Vec
+import qualified Data.Vector                    as Vec
+import qualified HaskellWorks.Data.PackedVector as PV
 import           Test.Hspec
 import           Test.QuickCheck
 import           Data.Maybe
@@ -24,7 +25,7 @@ instance (RankSelectArray a) => Arbitrary (SDArray a) where
     return $ fromOnes size onesCount l
 
 testBuildLower :: IO ()
-testBuildLower = lowerArr `shouldBe` Vec.fromList [1, 3]
+testBuildLower = lowerArr `shouldBe` PV.fromList 2 [1, 3]
   where
     bitArray = fromOnes 8 2 [5, 7] :: SDArray'
     lowerArr = lowerBits bitArray
@@ -56,7 +57,11 @@ compareSDArrayWithBackends (NonEmpty bools) = all testSelect [1 .. onesCount] &&
       where
         rankTrueTest = rank sdarrayVectorBitArray True i == rank sdarrayDenseArray True i
 
-
+testGetBit :: IO ()
+testGetBit = bit `shouldBe` False
+  where
+    bitArray = fromOnes 8 2 [5, 7] :: SDArray'
+    bit = sdarrayGetBit 6 bitArray
 
 spec :: Spec
 spec =

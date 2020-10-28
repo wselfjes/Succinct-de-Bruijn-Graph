@@ -58,6 +58,8 @@ library
     , fasta
     , graphviz
     , hashmap
+    , hw-packed-vector
+    , hw-prim
     , split
     , text
     , vector
@@ -79,6 +81,8 @@ executable SuccinctDeBruijnGraph-exe
     , fasta
     , graphviz
     , hashmap
+    , hw-packed-vector
+    , hw-prim
     , split
     , text
     , vector
@@ -100,6 +104,8 @@ test-suite doctests
     , fasta
     , graphviz
     , hashmap
+    , hw-packed-vector
+    , hw-prim
     , split
     , template-haskell
     , text
@@ -134,6 +140,8 @@ test-suite spec
     , hashmap
     , hspec
     , hspec-core
+    , hw-packed-vector
+    , hw-prim
     , split
     , text
     , vector

@@ -40,6 +40,8 @@ dependencies:
 - text
 - graphviz
 - Unique
+- hw-packed-vector
+- hw-prim
 
 library:
   source-dirs: 
