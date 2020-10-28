@@ -8,7 +8,6 @@ module Data.RankSelectArray.SDArray where
 
 import           Data.RankSelectArray.Class
 import           Data.RankSelectArray.VectorBitArray
---import           Data.RankSelectArray.DenseArray
 import qualified Data.IntMap                         as IntMap
 
 import           Data.Bits                           (Bits (shiftL, shiftR, (.&.), (.|.)),
@@ -25,7 +24,7 @@ data SDArray darray = SDArray
     , bitVectorSize :: BitArraySize
     , upperBits     :: darray
     , lowerBits     :: PackedVector64
-    } deriving Eq
+    } deriving (Eq, Show)
 
 countOnes :: SDArray darray -> Int
 countOnes = fromIntegral . toInteger . length . lowerBits
@@ -39,6 +38,8 @@ instance RankSelectArray darray => RankSelectArray (SDArray darray) where
   rank          = sdarrayRank
   fromOnes      = sdarrayFromOnes
   getBit        = sdarrayGetBit
+  getSize       = bitVectorSize
+  getOneCount   = countOnes
 
   -- TODO: efficient getBit implementation?
 
@@ -70,11 +71,6 @@ sdarraySetBits sdarray elems = fromOnes
     newOnesMap = intMapElems `IntMap.union` intMapOnes
     newOnes = map fst (filter snd (IntMap.toList newOnesMap))
 
--- | Convert sdarray to a list of positions of ones in input array.
-toOnes :: RankSelectArray darray => SDArray darray -> [Int]
-toOnes arr = map (select arr True) [1..m]
-  where
-    m = countOnes arr
 
 -- | Convert list of positions of one to sdarray.
 sdarrayFromOnes
@@ -159,7 +155,4 @@ sdarrayGetBit
   => Int
   -> SDArray darray
   -> Bool
-sdarrayGetBit pos arr = if (rank arr True pos) - (rank arr True (pos - 1)) == 0
-                        then False
-                        else True
-
+sdarrayGetBit pos arr = (rank arr True pos) - (rank arr True (pos - 1)) /= 0 

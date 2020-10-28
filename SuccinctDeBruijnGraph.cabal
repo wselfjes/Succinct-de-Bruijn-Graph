@@ -4,7 +4,7 @@ cabal-version: 1.24
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 76f1c15354fe1f71d2cbf8963b05da8cb7cfdbbc079faa79d653420e5cf7f219
+-- hash: c9f9a9509fa70b36528c94b471c212e6fdbf633b5ce8d04269d879dd394767e8
 
 name:           SuccinctDeBruijnGraph
 version:        0.1.0.0
@@ -118,6 +118,8 @@ test-suite spec
   other-modules:
       Data.Graph.Algorithms.EulerianWalkSpec
       Data.Graph.DeBruijnGraphSpec
+      Data.RankSelectArray.ClassSpecGenerator
+      Data.RankSelectArray.DenseArraySpec
       Data.RankSelectArray.SDArraySpec
       Data.RankSelectArray.VectorBitArraySpec
       Data.Sequence.DNASpec
