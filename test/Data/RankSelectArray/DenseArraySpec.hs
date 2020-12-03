@@ -9,7 +9,7 @@ import           Data.RankSelectArray.DenseArray
 import           Data.RankSelectArray.VectorBitArray
 import           Test.Hspec
 import           Test.Hspec.Core.QuickCheck              (modifyMaxSuccess)
-import           Test.QuickCheck hiding (getSize)
+import           Test.QuickCheck                         hiding (getSize)
 
 instance (RankSelectArray a) => Arbitrary (DenseArray a) where
   arbitrary = do
