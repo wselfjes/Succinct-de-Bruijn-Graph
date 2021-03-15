@@ -6,16 +6,16 @@
 -- [hillbig/sdarray](https://github.com/hillbig/sdarray) used as an example
 module Data.RankSelectArray.SDArray where
 
+import qualified Data.IntMap                         as IntMap
 import           Data.RankSelectArray.Class
 import           Data.RankSelectArray.VectorBitArray
-import qualified Data.IntMap                         as IntMap
 
 import           Data.Bits                           (Bits (shiftL, shiftR, (.&.), (.|.)),
                                                       FiniteBits (finiteBitSize))
 import qualified Data.Bits                           as Bits
-import           HaskellWorks.Data.PackedVector
-import           HaskellWorks.Data.AtIndex
 import           Data.Int
+import           HaskellWorks.Data.AtIndex
+import           HaskellWorks.Data.PackedVector
 import           Prelude                             hiding (length)
 
 -- |
@@ -24,12 +24,20 @@ data SDArray darray = SDArray
     , bitVectorSize :: BitArraySize
     , upperBits     :: darray
     , lowerBits     :: PackedVector64
-    } deriving (Eq, Show)
+    }
+    deriving (Eq)
 
 countOnes :: SDArray darray -> Int
 countOnes = fromIntegral . toInteger . length . lowerBits
 
 type SDArray' = SDArray VectorBitArray
+
+instance RankSelectArray darray => Show (SDArray darray) where
+  show arr = bitString
+    where
+      bitString = concat (map (\x -> if x then "1" else "0") bitArray)
+      size = getSize arr
+      bitArray = map (\x -> x `elem` (toOnes arr)) [0 .. size]
 
 instance RankSelectArray darray => RankSelectArray (SDArray darray) where
   generateEmpty = sdarrayGenerateEmpty
@@ -155,4 +163,4 @@ sdarrayGetBit
   => Int
   -> SDArray darray
   -> Bool
-sdarrayGetBit pos arr = (rank arr True pos) - (rank arr True (pos - 1)) /= 0 
+sdarrayGetBit pos arr = (rank arr True pos) - (rank arr True (pos - 1)) /= 0
