@@ -11,7 +11,7 @@ import           Data.RankSelectArray.Diff
 data Union a b = Union a b
     deriving (Eq, Show)
 
--- | Unions of multiple RankSelectArrays where a is a common part and b's are uniq part
+-- | Unions of multiple RankSelectArrays where a is `a` common part and `b`'s are uniq part
 data Unions a b = Unions a [b]
     deriving (Eq, Show)
 
@@ -43,11 +43,11 @@ fromListsAsc
   -> Unions a b
 fromListsAsc leftSize rightSize left right = Unions commonArray [leftArray, rightArray]
   where
-    commonPart = filter (\x -> x `elem` right) right
+    commonPart = filter (`elem` right) right
     commonSize = length commonPart + 1
     commonArray = fromOnes commonSize (length commonPart) commonPart
-    leftPart = filter (\x -> not (x `elem` commonPart)) left
-    rightPart = filter (\x -> not (x `elem` commonPart)) right
+    leftPart = filter (`notElem` commonPart) left
+    rightPart = filter (`notElem` commonPart) right
     leftArray = fromOnes leftSize (length leftPart) leftPart
     rightArray = fromOnes rightSize (length rightPart) rightPart
 
@@ -91,8 +91,8 @@ unionSelect union@(Union left right) forOnes count
   | count > getOneCount union || count <= 0 = -1
   | otherwise = fromMaybe (-1) (leftResult <|> rightResult)
     where
-      leftResult = ultimateBinarySearch left (const count) (const 0) (selectGetItem) rankCompare
-      rightResult = ultimateBinarySearch right (const count) (const 0) (selectGetItem) rankCompare
+      leftResult = ultimateBinarySearch left (const count) (const 0) selectGetItem rankCompare
+      rightResult = ultimateBinarySearch right (const count) (const 0) selectGetItem rankCompare
 
       selectGetItem coll i = case select coll forOnes i of
                              -1 -> Nothing
@@ -125,8 +125,8 @@ unionSetBits (Union left right) bits = Union newLeft newRight
     newRight = setBits right rightArrays
     filterFunction isLeft (_, _, Left _)  = isLeft
     filterFunction isLeft (_, _, Right _) = not isLeft
-    leftArrays = map (\(ind, value, _) -> (ind, value)) ((filter (filterFunction True)) bits)
-    rightArrays = map (\(ind, value, _) -> (ind, value)) ((filter (filterFunction False)) bits)
+    leftArrays = map (\(ind, value, _) -> (ind, value)) (filter (filterFunction True) bits)
+    rightArrays = map (\(ind, value, _) -> (ind, value)) (filter (filterFunction False) bits)
 
 -- ** Utils
 
@@ -152,7 +152,7 @@ ultimateBinarySearch collection getMaxSelector getMinSelector getItem comp = rec
                     Just GT -> recursion (midPoint + 1) right
                     Nothing -> Nothing
         where
-          midPoint = fromInteger (ceiling ((fromIntegral (left + right)) / 2))
+          midPoint = fromInteger (ceiling (fromIntegral (left + right) / 2))
           value = collection `getItem` midPoint
           ordering = comp <$> value
 

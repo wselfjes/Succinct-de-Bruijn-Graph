@@ -47,7 +47,7 @@ emptyDeBruijn
   => Base -- ^ Length of the edge.
   -> DeBruijnGraph a b -- ^ Empty de Bruijn Graph. Without any edges.
 emptyDeBruijn base =
-  DeBruijnGraph base (generateEmpty (4 ^ base)) (IntMap.empty)
+  DeBruijnGraph base (generateEmpty (4 ^ base)) IntMap.empty
 
 -- | Create de Bruijn Graph from Sequences
 fromSequences

@@ -66,24 +66,23 @@ edgeNodes (FixedList xs) = [FixedList (init xs), FixedList (tail xs)]
 
 -- |
 -- >>> edges (graphFromReads @2 [unsafeLetters @"ACTG" "AAACCAACC"])
--- ["AAA","CAA","CCA","AAC","ACC"]
+-- ["AAA","AAC","ACC","CAA","CCA"]
 edges :: (Bounded a, Enum a, KnownNat (n + 1)) => DeBruijnGraph n a -> [Edge n a]
 edges = RSMap.keys toBoundedEnum . edgeCount
 
 -- |
 --
 -- >>> nodes (graphFromReads @2 [unsafeLetters @"ACTG" "AAACCAACC"])
--- ["AA","CA","CC","AC"]
+-- ["AA","AC","CC","CA"]
 nodes
   :: (Bounded a, Enum a, Eq a, KnownNat n, KnownNat (n + 1))
   => DeBruijnGraph n a -> [Node n a]
 nodes = nub . concatMap edgeNodes . edges
 
 -- |
---
 -- >>> graphFromReads @2 [unsafeLetters @"ACTG" "AAACCAACC"]
--- [("AAA",1),("CAA",1),("CCA",1),("AAC",2),("ACC",2)]
--- >>> (Data.RankSelectArray.SDArray.toOnes . Data.RankSelect.Map.rsBitmap . edgeCount) (graphFromReads @1 [unsafeLetters @"ACGT" "TTCGGAAG"])
+-- [("AAA",1),("AAC",1),("ACC",1),("CAA",2),("CCA",2)]
+-- >>> (Data.RankSelectArray.Class.toOnes . Data.RankSelect.Map.rsBitmap . edgeCount) (graphFromReads @1 [unsafeLetters @"ACGT" "TTCGGAAG"])
 -- [0,2,6,8,10,13,15]
 graphFromReads
   :: forall n a. (KnownNat (n + 1), Bounded a, Enum a, Show a)

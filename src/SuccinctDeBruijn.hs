@@ -1,11 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 module SuccinctDeBruijn where
 
-import           Data.RankSelectArray.SDArray
 import           Data.Fasta.String.Parse
 import           Data.Fasta.String.Types
 import           Data.Graph.Algorithms.EulerianWalk
 import           Data.Graph.DeBruijnGraph
+import           Data.RankSelectArray.SDArray
 import           Data.Sequence.DNA
 import           Plotting.DeBruijnGraphPlotting
 import           System.Environment
@@ -13,7 +13,6 @@ import           System.Exit
 import           System.IO                          (BufferMode (..),
                                                      hSetBuffering, stdout)
 import           Text.Read                          (readMaybe)
-
 
 run :: IO ()
 run = do
@@ -28,18 +27,18 @@ runWithArgs base fileName = do
   putStrLn ("Processing file " <> fileName <> " (using base " <> show base <> ")")
   fastaData <- readFile fileName `as` "Reading file"
   let parsedFasta = parseFasta fastaData
-  let readsString = (map fastaSeq parsedFasta)
+  let readsString = map fastaSeq parsedFasta
   let readsDNASequences = map unsafeParseDNASequence readsString
   checkReads base readsDNASequences `as` "Checking reads"
   let rawDeBruijnGraph = fromSequences base readsDNASequences :: DeBruijnGraph Nucleotide SDArray'
   drawGraph rawDeBruijnGraph `as` "Drawing deBruijnGraph"
-  let deBruijnGraph = preprocess rawDeBruijnGraph
-  let assembledSequence = assemblyDeBruijnUsingEulerianWalk deBruijnGraph
-  writeFile "data/result.txt" (show assembledSequence) `as` "Writing result"
+  -- let deBruijnGraph = preprocess rawDeBruijnGraph
+  -- let assembledSequence = assemblyDeBruijnUsingEulerianWalk deBruijnGraph
+  -- writeFile "data/result.txt" (show assembledSequence) `as` "Writing result"
 
 checkReads :: Base -> [DNASequence] -> IO ()
 checkReads k sequences = do
-  if length (filter ((< k) . length . getSequence) sequences) > 0
+  if not (null (filter ((< k) . length . getSequence) sequences))
   then die "Length of one of the read is less than base"
   else return ()
 

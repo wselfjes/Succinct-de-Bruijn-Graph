@@ -38,16 +38,16 @@ unsafeFixedList xs
     n = fromIntegral (natVal (Proxy :: Proxy n))
 
 instance (KnownNat n, Bounded a, Enum a) => Enum (FixedList n a) where
-  fromEnum (FixedList xs) = sum (zipWith fromSymbol xs [0..])
+  fromEnum (FixedList xs) = sum (zipWith fromSymbol (reverse xs) [0..])
     where
       fromSymbol x i = fromBoundedEnum x * (base ^ i)
       base = boundedEnumSize xs
 
-  toEnum i = FixedList (unpadded <> replicate pad minBound)
+  toEnum i = FixedList (replicate pad minBound <> unpadded)
     where
       n = fromIntegral (natVal (Proxy @n))
       pad = n - length unpadded
-      unpadded = go i
+      unpadded = reverse (go i)
       base = boundedEnumSize (Proxy :: Proxy a)
       go k
         | k > 0 = toBoundedEnum m : go d
