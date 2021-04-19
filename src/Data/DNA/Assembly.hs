@@ -65,14 +65,14 @@ edgeNodes :: Edge n a -> [Node n a]
 edgeNodes (FixedList xs) = [FixedList (init xs), FixedList (tail xs)]
 
 -- |
--- >>> edges (graphFromReads @2 [unsafeLetters @"ACTG" "AAACCAACC"])
+-- >>> edges (graphFromReads @2 [unsafeLetters @"ACGT" "AAACCAACC"])
 -- ["AAA","AAC","ACC","CAA","CCA"]
 edges :: (Bounded a, Enum a, KnownNat (n + 1)) => DeBruijnGraph n a -> [Edge n a]
 edges = RSMap.keys toBoundedEnum . edgeCount
 
 -- |
 --
--- >>> nodes (graphFromReads @2 [unsafeLetters @"ACTG" "AAACCAACC"])
+-- >>> nodes (graphFromReads @2 [unsafeLetters @"ACGT" "AAACCAACC"])
 -- ["AA","AC","CC","CA"]
 nodes
   :: (Bounded a, Enum a, Eq a, KnownNat n, KnownNat (n + 1))
@@ -80,22 +80,24 @@ nodes
 nodes = nub . concatMap edgeNodes . edges
 
 -- |
--- >>> graphFromReads @2 [unsafeLetters @"ACTG" "AAACCAACC"]
+-- >>> graphFromReads @2 [unsafeLetters @"ACGT" "AAACCAACC"]
 -- [("AAA",1),("AAC",1),("ACC",1),("CAA",2),("CCA",2)]
 -- >>> (Data.RankSelectArray.Class.toOnes . Data.RankSelect.Map.rsBitmap . edgeCount) (graphFromReads @1 [unsafeLetters @"ACGT" "TTCGGAAG"])
 -- [0,2,6,8,10,13,15]
 graphFromReads
-  :: forall n a. (KnownNat (n + 1), Bounded a, Enum a, Show a)
-  => [[a]] -> DeBruijnGraph n a
+  :: forall n.  (KnownNat (n + 1), KnownNat n)
+  => [ReadSegment] -> DeBruijnGraph n Nucleotide
 graphFromReads segments = DeBruijnGraph $ RSMap.fromEnumListWith (+) size
   [ (chunkId, 1)
   | segment <- segments
-  , chunkId <- (fixedBoundedEnumChunks (Proxy @(n + 1)) segment)
-  ] where size = boundedEnumSize (Proxy @(Edge n a))
+  , chunkId <- map fromEnum (readChunks segment :: [Chunk (n + 1)])
+  ] where 
+      size = 4 ^ n
+      n = fromIntegral (natVal (Proxy :: Proxy n))
 
 -- | Successor edges of a node.
 --
--- >>> Data.DNA.Assembly.successorEdges (graphFromReads @2 [unsafeLetters @"AB" "AABABBA"]) "AB"
+-- >>> Data.DNA.Assembly.successorEdges (graphFromReads @2 [unsafeLetters @"ACGT" "ACCGGTT"]) "AC"
 -- [("ABA",1),("ABB",1)]
 successorEdges
   :: forall n a. (Bounded a, Enum a, KnownNat n, KnownNat (n + 1))

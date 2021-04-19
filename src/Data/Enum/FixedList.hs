@@ -72,7 +72,7 @@ fixedChunks = map FixedList . chunksOf n
   where
     n = fromIntegral (natVal (Proxy :: Proxy n))
 
--- | Efficiently compute enum values of 'FixedList' chunks.
+-- | Efficiently compute enum values of 'FixedList' chunks. #TODO: FIX
 --
 -- @
 -- fixedBoundedEnumChunks = map fromEnum . fixedChunks
