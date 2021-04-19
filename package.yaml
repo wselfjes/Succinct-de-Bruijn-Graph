@@ -42,6 +42,7 @@ dependencies:
 - Unique
 - hw-packed-vector
 - hw-prim
+- ghc-typelits-knownnat
 
 library:
   source-dirs: 

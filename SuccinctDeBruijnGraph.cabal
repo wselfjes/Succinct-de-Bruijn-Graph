@@ -4,7 +4,7 @@ cabal-version: 1.24
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 65a129941c79b7363cf43ae25a0e2540ed885830f03ec92d2f9b4f8019e9f0e7
+-- hash: 2ce031069f48e3426046b098076b9fa0b8f1198b26c5454460dc94659863af4d
 
 name:           SuccinctDeBruijnGraph
 version:        0.1.0.0
@@ -58,6 +58,7 @@ library
     , containers
     , doctest
     , fasta
+    , ghc-typelits-knownnat
     , graphviz
     , hashmap
     , hw-packed-vector
@@ -81,6 +82,7 @@ executable SuccinctDeBruijnGraph-exe
     , containers
     , doctest
     , fasta
+    , ghc-typelits-knownnat
     , graphviz
     , hashmap
     , hw-packed-vector
@@ -104,6 +106,7 @@ test-suite doctests
     , containers
     , doctest
     , fasta
+    , ghc-typelits-knownnat
     , graphviz
     , hashmap
     , hw-packed-vector
@@ -140,6 +143,7 @@ test-suite spec
     , containers
     , doctest
     , fasta
+    , ghc-typelits-knownnat
     , graphviz
     , hashmap
     , hspec

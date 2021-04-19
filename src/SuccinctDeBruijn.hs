@@ -1,18 +1,22 @@
-{-# LANGUAGE DataKinds        #-}
-{-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# OPTIONS_GHC -fplugin GHC.TypeLits.KnownNat.Solver #-}
+{-# LANGUAGE DataKinds                 #-}
+{-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE FlexibleContexts          #-}
+{-# LANGUAGE KindSignatures            #-}
+{-# LANGUAGE ScopedTypeVariables       #-}
+{-# LANGUAGE TypeApplications          #-}
+{-# LANGUAGE TypeOperators             #-}
 module SuccinctDeBruijn where
 
+import           Control.Monad
 import           Data.DNA.Assembly
 import           Data.Enum.Letter
 import           Data.Fasta.String.Parse
 import           Data.Fasta.String.Types
-import           Plotting.DeBruijnGraphPlotting
-import           GHC.TypeLits
-import           Control.Monad
 import           Data.Proxy
+import           Data.Type.Equality             (testEquality)
+import           GHC.TypeLits
+import           Plotting.DeBruijnGraphPlotting
 import           System.Environment
 import           System.Exit
 import           System.IO                      (BufferMode (..), hSetBuffering,
@@ -25,11 +29,13 @@ run = do
   args <- parseArgs
   case args of
     Nothing               -> putStrLn "Usage: stack run [base] [file]"
-    Just (fileName, base) -> case base of 
+    Just (fileName, base) -> case base of
       Nothing -> putStrLn "base must be a natural number"
       Just (SomeNat p@(_ :: Proxy n)) -> runWithArgs p fileName
 
-runWithArgs :: (KnownNat base, KnownNat (base + 1)) => Proxy base -> FilePath -> IO ()
+data AKnownNat (n :: Nat) = forall n. (KnownNat n) => AKnownNat (Proxy n)
+
+runWithArgs :: forall base. KnownNat base => Proxy base -> FilePath -> IO ()
 runWithArgs proxy fileName = do
   let baseValue = fromIntegral (natVal proxy)
   putStrLn ("Processing file " <> fileName <> " (using base " <> show baseValue <> ")")
