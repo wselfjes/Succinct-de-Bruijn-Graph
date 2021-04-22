@@ -11,7 +11,7 @@ import           Data.List           (nub)
 import           Data.Proxy
 import           GHC.TypeLits
 
-import           Data.RankSelect.Map (RankSelectMap)
+import           Data.RankSelect.Map (RankSelectMap')
 import qualified Data.RankSelect.Map as RSMap
 
 import           Data.Enum.FixedList
@@ -47,7 +47,7 @@ readChunks = map (Chunk . FixedList) . chunksOf n
     n = fromIntegral (natVal (Proxy :: Proxy n))
 
 newtype DeBruijnGraph n a = DeBruijnGraph
-  { edgeCount :: RankSelectMap (Edge n a) Int }
+  { edgeCount :: RankSelectMap' (Edge n a) Int }
 
 instance (Show (Edge n a), Bounded a, Enum a, KnownNat (n + 1))
   => Show (DeBruijnGraph n a) where
@@ -91,7 +91,7 @@ graphFromReads segments = DeBruijnGraph $ RSMap.fromEnumListWith (+) size
   [ (chunkId, 1)
   | segment <- segments
   , chunkId <- map fromEnum (readChunks segment :: [Chunk (n + 1)])
-  ] where 
+  ] where
       size = 4 ^ n
       n = fromIntegral (natVal (Proxy :: Proxy n))
 
@@ -128,3 +128,11 @@ markEdge (DeBruijnGraph graph) edge = DeBruijnGraph graph'
   where
     graph' = RSMap.update (subtract 1) edge graph
 
+
+
+-- * Assembly
+
+assembly
+  :: DeBruijnGraph n a
+  -> [Contig]
+assembly deBruijnGraph = []

@@ -5,21 +5,20 @@ import           Control.Applicative
 import           Data.Maybe
 import           Data.RankSelectArray.Class
 import           Data.RankSelectArray.Diff
+import           Data.RankSelectArray.SDArray (SDArray')
 
 
 -- | Disjoint Union of two RankSelectArray
 data Union a b = Union a b
     deriving (Eq, Show)
 
--- | Unions of multiple RankSelectArrays where a is `a` common part and `b`'s are uniq part
-data Unions a b = Unions a [b]
-    deriving (Eq, Show)
-
+--- | 
+data Unions a b c = Unions a [Union b c]
 -- | Combination of Union and Diff structure
 type UnionDiff a b c = Union a (Diff b c)
 
 -- | Combination of Unions and Diff structure
-type UnionsDiff a b c = Unions a (Diff b c)
+type UnionsDiff a b c = Unions a b (Diff a c)
 
 
 instance (RankSelectArray a, RankSelectArray b) => RankSelectArray (Union a b) where
@@ -35,17 +34,18 @@ instance (RankSelectArray a, RankSelectArray b) => RankSelectArray (Union a b) w
 -- | Convert two asc list to Unions Structure
 -- The intersection of two arrays must be greater than 50%
 fromListsAsc
-  :: (RankSelectArray a, RankSelectArray b)
+  :: (RankSelectArray a, RankSelectArray b, RankSelectArray c)
   => Int  -- ^ Size of left array
   -> Int  -- ^ Size of right array
   -> [Int] -- ^ Left ones
   -> [Int] -- ^ Right ones
-  -> Unions a b
-fromListsAsc leftSize rightSize left right = Unions commonArray [leftArray, rightArray]
+  -> UnionsDiff a b c
+fromListsAsc leftSize rightSize left right = Unions commonArray [Union leftArray commonDiffArray , Union rightArray commonDiffArray]
   where
     commonPart = filter (`elem` right) right
     commonSize = length commonPart + 1
     commonArray = fromOnes commonSize (length commonPart) commonPart
+    commonDiffArray = Data.RankSelectArray.Diff.fromListsAsc (length commonPart) commonPart []
     leftPart = filter (`notElem` commonPart) left
     rightPart = filter (`notElem` commonPart) right
     leftArray = fromOnes leftSize (length leftPart) leftPart
@@ -55,27 +55,30 @@ fromListsAsc leftSize rightSize left right = Unions commonArray [leftArray, righ
 -- ** Update unions
 
 -- | Add array into UnionsDiff, puts in front of uniqParts
-addArrayToUnion
+addArrayToUnions
   :: (RankSelectArray a, RankSelectArray b, RankSelectArray c)
   => Int -- ^ Size of an array
   -> [Int] -- ^ Ones
   -> UnionsDiff a b c
   -> UnionsDiff a b c
-addArrayToUnion size ones (Unions commonPart uniqParts) = Unions commonPart (newUniqPart:uniqParts)
+addArrayToUnions size ones (Unions commonPart uniqParts) = Unions commonPart (newUniqPart:uniqParts)
   where
     commonOnes = toOnes commonPart
-    rightDiffPart = filter (\x -> not (x `elem` ones)) commonOnes
-    leftDiffPart = filter (\x -> not (x `elem` commonOnes)) ones
-    newUniqPart = Diff (fromOnes size (length leftDiffPart) leftDiffPart) (fromOnes size (length rightDiffPart) rightDiffPart)
+    uniquePart = filter (`elem` commonOnes) ones
+    diffPart = filter (`elem` ones) commonOnes
+    diffPartArray = fromOnes size 0 diffPart
+    uniqueArray = fromOnes size 0 uniquePart
+    newUniqPart = Union uniqueArray (Diff commonPart diffPartArray) 
+
 
 -- ** Select Union in Unions
 
 -- | Get by index union
 getUnion
-  :: Int
-  -> Unions a b
-  -> Union a b
-getUnion index (Unions commonPart uniqParts) = Union commonPart (uniqParts !! index)
+  :: Unions a b c
+  -> Int
+  -> Union b c
+getUnion (Unions _ arr) = (!!) arr
 
 
 -- ** Query operations from Union

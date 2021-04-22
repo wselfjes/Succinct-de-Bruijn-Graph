@@ -25,12 +25,9 @@ fromListsAsc
   => Int   -- ^ Size of RankSelectArray
   -> [Int] -- ^ Left ones
   -> [Int] -- ^ Right ones
-  -> Maybe (Diff a b)
-fromListsAsc size leftOnes rightOnes = if length notCommon > 0
-                                       then Nothing
-                                       else Just diff
+  -> Diff a b
+fromListsAsc size leftOnes rightOnes = diff
   where
-    notCommon = filter (\x -> x `elem` rightOnes) leftOnes
     diff = Diff (fromOnes size (length leftOnes) leftOnes) (fromOnes (length rightOnes + 1) (length rightOnes) rightOnes)
 
 

@@ -14,7 +14,6 @@ import           Data.Enum.Letter
 import           Data.Fasta.String.Parse
 import           Data.Fasta.String.Types
 import           Data.Proxy
-import           Data.Type.Equality             (testEquality)
 import           GHC.TypeLits
 import           Plotting.DeBruijnGraphPlotting
 import           System.Environment
@@ -46,10 +45,9 @@ runWithArgs proxy fileName = do
   checkReads baseValue readsDNASequences `as` "Checking reads"
   let deBruijnGraph = graphFromReads readsDNASequences :: DeBruijnGraph base Nucleotide
   print deBruijnGraph
-  -- drawGraph rawDeBruijnGraph `as` "Drawing deBruijnGraph"
-  -- let deBruijnGraph = preprocess rawDeBruijnGraph
-  -- let assembledSequence = assemblyDeBruijnUsingEulerianWalk deBruijnGraph
-  -- writeFile "data/result.txt" (show assembledSequence) `as` "Writing result"
+  --drawGraph deBruijnGraph `as` "Drawing deBruijnGraph"
+  --let assembledSequence = assemblyDeBruijnUsingEulerianWalk deBruijnGraph
+  --writeFile "data/result.txt" (show assembledSequence) `as` "Writing result"
 
 checkReads :: Int -> [ReadSegment] -> IO ()
 checkReads k sequences = unless (any ((< k) . length)  sequences) (die "Length of one of the read is less than base")
