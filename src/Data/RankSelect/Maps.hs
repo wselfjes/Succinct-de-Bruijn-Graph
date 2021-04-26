@@ -18,6 +18,9 @@ data RankSelectMaps k v = RankSelectMaps
   } deriving (Show)
 
 
+-- | Transform list of lists into RankSelectMaps
+--
+-- >>> 
 fromListsAscN
   :: (Eq k, Eq v)
   => (k -> Int)
@@ -44,7 +47,7 @@ fromListsAscOfTwo toInt n (FixedList kvss) = RankSelectMaps {commonPart=commonPa
   where
     maps = zipWith (\up vs -> RSMap.RankSelectMap up (Vector.fromList (map snd vs))) uniqueParts kvss
     (Unions commonPartArray uniqueParts) = unionOfTwo
-    unionOfTwo = fromListsAsc n n (map (toInt . fst) first) (map (toInt . fst) second)
+    unionOfTwo = fromListsAsc n (map (toInt . fst) first) (map (toInt . fst) second)
     (first:(second:_)) = kvss
 
 

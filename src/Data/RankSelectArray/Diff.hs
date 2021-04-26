@@ -28,7 +28,7 @@ fromListsAsc
   -> Diff a b
 fromListsAsc size leftOnes rightOnes = diff
   where
-    diff = Diff (fromOnes size (length leftOnes) leftOnes) (fromOnes (length rightOnes + 1) (length rightOnes) rightOnes)
+    diff = Diff (fromOnes size (length leftOnes) leftOnes) (fromOnes size (length rightOnes) rightOnes)
 
 
 -- ** Query operations
