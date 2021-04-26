@@ -96,13 +96,15 @@ unionSelect union@(Union left right) forOnes count
   | count > getOneCount union || count <= 0 = -1
   | otherwise = fromMaybe (-1) (leftResult <|> rightResult)
     where
-      leftResult = ultimateBinarySearch left (const count) (const 0) selectGetItem rankCompare
-      rightResult = ultimateBinarySearch right (const count) (const 0) selectGetItem rankCompare
+      leftResult = ultimateBinarySearch left  (const 1) (const (getOneCount left)) selectGetItem rankCompare
+      rightResult = ultimateBinarySearch right (const 1) (const (getOneCount right)) selectGetItem rankCompare
 
-      selectGetItem coll i = case select coll forOnes i of
-                             -1 -> Nothing
-                             v  -> Just v
-      rankCompare v = compare count (unionRank union forOnes v)
+      selectGetItem coll i
+        | selectedValue < 0 = Nothing 
+        | otherwise = Just selectedValue
+        where
+          selectedValue = select coll forOnes i
+      rankCompare v = compare count (unionRank union forOnes v) 
 
 
 
@@ -139,12 +141,12 @@ unionSetBits (Union left right) bits = Union newLeft newRight
 ultimateBinarySearch
   :: (Ord s, Num s, Integral s)
   => f                           -- ^ Collection
-  -> (f -> s)                    -- ^ Get maximum selector
   -> (f -> s)                    -- ^ Get minimum selector
+  -> (f -> s)                    -- ^ Get maximum selector
   -> (f -> s -> Maybe a)         -- ^ Get item
   -> (a -> Ordering)             -- ^ compare values, example (compare a)
   -> Maybe a
-ultimateBinarySearch collection getMaxSelector getMinSelector getItem comp = recursion minSelector maxSelector
+ultimateBinarySearch collection getMinSelector getMaxSelector getItem comp = recursion minSelector maxSelector
   where
     maxSelector = getMaxSelector collection
     minSelector = getMinSelector collection

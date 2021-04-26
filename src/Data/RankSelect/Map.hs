@@ -48,7 +48,7 @@ instance (Show v, Show k, Bounded k, Enum k, RSArray.RankSelectArray t) => Show 
 
 -- |
 --
--- >>> [(3, 'a'), (64, 'b'), (-32, 'c')] :: RankSelectMap Int8 Char
+-- >>> [(3, 'a'), (64, 'b'), (-32, 'c')] :: RankSelectMap' Int8 Char
 -- fromListAscN fromBoundedEnum 256 3 [(-32,'c'),(3,'a'),(64,'b')]
 instance (Bounded k, Enum k, RSArray.RankSelectArray t) => GHC.IsList (RankSelectMap t k v) where
   type Item (RankSelectMap t k v) = (k, v)
@@ -60,7 +60,7 @@ instance (Bounded k, Enum k, RSArray.RankSelectArray t) => GHC.IsList (RankSelec
 -- Returns number of keys in 'RankSelectMap'
 -- that are less than or equal to a given key.
 --
--- >>> rank 45 ([(3, 'a'), (64, 'b'), (-32, 'c')] :: RankSelectMap Int8 Char)
+-- >>> rank 45 ([(3, 'a'), (64, 'b'), (-32, 'c')] :: RankSelectMap' Int8 Char)
 -- 2
 rank :: (Bounded k, Enum k, RSArray.RankSelectArray t) => k -> RankSelectMap t k v -> Int
 rank x rs = RSArray.rank (rsBitmap rs) True (fromBoundedEnum x)
@@ -70,7 +70,7 @@ rank x rs = RSArray.rank (rsBitmap rs) True (fromBoundedEnum x)
 -- @'select' i rs@ returns \(i\)th least key from @rs@
 -- along with its associated value.
 --
--- >>> select 2 ([(3, 'a'), (64, 'b'), (-32, 'c')] :: RankSelectMap Int8 Char)
+-- >>> select 2 ([(3, 'a'), (64, 'b'), (-32, 'c')] :: RankSelectMap' Int8 Char)
 -- (3,'a')
 select :: (Bounded k, Enum k, RSArray.RankSelectArray t) => Int -> RankSelectMap t k v -> (k, v)
 select i rs = (toBoundedEnum k, rsValues rs Vector.! (i - 1))
@@ -82,7 +82,7 @@ select i rs = (toBoundedEnum k, rsValues rs Vector.! (i - 1))
 -- Returns number of keys in 'RankSelectMap'
 -- that are less than or equal to a given key (converted to 'Int').
 --
--- >>> rankEnum (127 + 45) ([(3, 'a'), (64, 'b'), (-32, 'c')] :: RankSelectMap Int8 Char)
+-- >>> rankEnum (127 + 45) ([(3, 'a'), (64, 'b'), (-32, 'c')] :: RankSelectMap' Int8 Char)
 -- 2
 rankEnum
   :: (RSArray.RankSelectArray t)
@@ -96,7 +96,7 @@ rankEnum k rs = RSArray.rank (rsBitmap rs) True k
 -- @'select' i rs@ returns \(i\)th least key (as 'Int') from @rs@
 -- along with its associated value.
 --
--- >>> selectEnum 2 ([(3, 'a'), (64, 'b'), (-32, 'c')] :: RankSelectMap Int8 Char)
+-- >>> selectEnum 2 ([(3, 'a'), (64, 'b'), (-32, 'c')] :: RankSelectMap' Int8 Char)
 -- (131,'a')
 selectEnum :: (Bounded k, Enum k, RSArray.RankSelectArray t) => Int -> RankSelectMap t k v -> (Int, v)
 selectEnum i rs = (k, rsValues rs Vector.! (i - 1))
@@ -105,14 +105,14 @@ selectEnum i rs = (k, rsValues rs Vector.! (i - 1))
 
 -- | Capacity of 'RankSelectMap' (maximum possible number of elements).
 --
--- >>> capacity ([(3, 'a'), (64, 'b'), (-32, 'c')] :: RankSelectMap Int8 Char)
+-- >>> capacity ([(3, 'a'), (64, 'b'), (-32, 'c')] :: RankSelectMap' Int8 Char)
 -- 256
 capacity :: (RSArray.RankSelectArray t) => RankSelectMap t k v -> Int
 capacity = RSArray.getSize . rsBitmap
 
 -- | Number of elements in the set.
 --
--- >>> size ([(3, 'a'), (64, 'b'), (-32, 'c')] :: RankSelectMap Int8 Char)
+-- >>> size ([(3, 'a'), (64, 'b'), (-32, 'c')] :: RankSelectMap' Int8 Char)
 -- 3
 size :: RankSelectMap t k v -> Int
 size = length . rsValues
@@ -224,7 +224,7 @@ fromListAscBoundedEnum xs = fromListAsc fromBoundedEnum (boundedEnumSize (Proxy 
 
 -- | Update element at key k
 --
--- >>> update (subtract 1) 'a' ([('a', 3), ('b', 2), ('c', 8)] :: RankSelectMap Char Int)
+-- >>> update (subtract 1) 'a' ([('a', 3), ('b', 2), ('c', 8)] :: RankSelectMap' Char Int)
 -- fromListAscN fromBoundedEnum 1114112 3 [('a',2),('b',2),('c',8)]
 update
   :: (Enum k, Bounded k, RSArray.RankSelectArray t)
