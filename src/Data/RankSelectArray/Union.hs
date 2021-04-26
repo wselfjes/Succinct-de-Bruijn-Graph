@@ -14,6 +14,8 @@ data Union a b = Union a b
 
 --- | 
 data Unions a b c = Unions a [Union b c]
+  deriving (Eq, Show)
+
 -- | Combination of Union and Diff structure
 type UnionDiff a b c = Union a (Diff b c)
 

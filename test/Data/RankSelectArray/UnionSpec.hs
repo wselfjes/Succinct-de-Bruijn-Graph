@@ -1,3 +1,6 @@
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
+
 module Data.RankSelectArray.UnionSpec where
 
 import           Data.List
@@ -11,7 +14,7 @@ import           Test.Hspec
 import           Test.QuickCheck                         hiding (getSize)
 
 
-instance (RankSelectArray a, RankSelectArray b) => Arbitrary (Unions a b) where
+instance (RankSelectArray a, RankSelectArray b, RankSelectArray c) => Arbitrary (UnionsDiff a b c) where
   arbitrary = do
     leftBools <- (arbitrary :: Gen [Bool])
     rightBools <- (arbitrary :: Gen [Bool])
@@ -24,7 +27,7 @@ instance (RankSelectArray a, RankSelectArray b) => Arbitrary (Unions a b) where
 instance (RankSelectArray a, RankSelectArray b) => Arbitrary (Union a b) where
   arbitrary = do
     unions <- arbitrary
-    let union = getUnion 0 unions
+    let union = getUnion unions 0
     return union
 
 

@@ -6,6 +6,6 @@ import Data.RankSelect.Maps as RSMaps
 
 
 
-newtype MultipleDeBruijnGraph = GenomesSet {getMaps :: RSMaps.Maps Nucleotide Int}
+newtype MultipleDeBruijnGraph = GenomesSet {getMaps :: RSMaps.RankSelectMaps Nucleotide Int}
 
 
