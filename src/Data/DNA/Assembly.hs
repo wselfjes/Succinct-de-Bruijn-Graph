@@ -98,7 +98,7 @@ graphFromReads segments = DeBruijnGraph $ RSMap.fromEnumListWith (+) size
 -- | Successor edges of a node.
 --
 -- >>> Data.DNA.Assembly.successorEdges (graphFromReads @2 [unsafeLetters @"ACGT" "ACCGGTT"]) "AC"
--- [("ABA",1),("ABB",1)]
+-- [("ACC",1)]
 successorEdges
   :: forall n a. (Bounded a, Enum a, KnownNat n, KnownNat (n + 1))
   => DeBruijnGraph n a
