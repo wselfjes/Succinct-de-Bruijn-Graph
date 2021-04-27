@@ -82,7 +82,7 @@ nodes = nub . concatMap edgeNodes . edges
 -- |
 -- >>> graphFromReads @2 [unsafeLetters @"ACGT" "AAACCAACC"]
 -- [("AAA",1),("AAC",2),("ACC",2),("CAA",1),("CCA",1)]
--- >>> (Data.RankSelectArray.Class.toOnes . Data.RankSelect.Map.rsBitmap . edgeCount) (graphFromReads @2 [unsafeLetters @"ACGT" "TTCGGAAG"])
+-- >>> (Data.RankSelectArray.Class.toOnes . Data.RankSelect.Map.rsBitmap . edgeCount) (graphFromReads @1 [unsafeLetters @"ACGT" "TTCGGAAG"])
 -- [0,2,6,8,10,13,15]
 graphFromReads
   :: forall n.  (KnownNat (n + 1), KnownNat n)
@@ -92,7 +92,7 @@ graphFromReads segments = DeBruijnGraph $ RSMap.fromEnumListWith (+) size
   | segment <- segments
   , chunkId <- map fromEnum (readChunks segment :: [Chunk (n + 1)])
   ] where
-      size = 4 ^ n
+      size = 4 ^ (n + 1)
       n = fromIntegral (natVal (Proxy :: Proxy n))
 
 -- | Successor edges of a node.
