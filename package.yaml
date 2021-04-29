@@ -89,3 +89,17 @@ tests:
     - Glob
     - QuickCheck
     - template-haskell
+
+benchmarks:
+  bench:
+    main:                Main.hs
+    source-dirs:         bench
+    ghc-options:
+    - -threaded
+    - -O2
+    - -rtsopts
+    - -with-rtsopts=-N
+    - -ddump-simpl
+    dependencies:
+    - criterion
+    - SuccinctDeBruijnGraph
