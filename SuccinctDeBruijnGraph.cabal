@@ -1,10 +1,10 @@
 cabal-version: 1.24
 
--- This file has been generated from package.yaml by hpack version 0.31.2.
+-- This file has been generated from package.yaml by hpack version 0.33.0.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 65a129941c79b7363cf43ae25a0e2540ed885830f03ec92d2f9b4f8019e9f0e7
+-- hash: 1680cfbb9092e932481a852a1b996745c11cbf1ca8f09592e440e1a07b7da33f
 
 name:           SuccinctDeBruijnGraph
 version:        0.1.0.0
@@ -144,6 +144,31 @@ test-suite spec
     , hashmap
     , hspec
     , hspec-core
+    , hw-packed-vector
+    , hw-prim
+    , split
+    , text
+    , vector
+  default-language: Haskell2010
+
+benchmark bench
+  type: exitcode-stdio-1.0
+  main-is: Main.hs
+  other-modules:
+      Paths_SuccinctDeBruijnGraph
+  hs-source-dirs:
+      bench
+  ghc-options: -Wall -fno-warn-type-defaults -threaded -O2 -rtsopts -with-rtsopts=-N -ddump-simpl
+  build-depends:
+      SuccinctDeBruijnGraph
+    , Unique
+    , base >=4.7 && <5
+    , containers
+    , criterion
+    , doctest
+    , fasta
+    , graphviz
+    , hashmap
     , hw-packed-vector
     , hw-prim
     , split
