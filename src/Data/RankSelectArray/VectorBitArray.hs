@@ -4,10 +4,10 @@
 -- TODO: module description
 module Data.RankSelectArray.VectorBitArray where
 
+import           Data.Maybe                 (fromMaybe)
 import           Data.RankSelectArray.Class
-import           Data.Maybe          (fromMaybe)
-import           Data.String         (IsString (..))
-import qualified Data.Vector         as V
+import           Data.String                (IsString (..))
+import qualified Data.Vector                as V
 
 newtype VectorBitArray = VectorBitArray
   { getVec :: V.Vector Bool }
@@ -21,13 +21,13 @@ toList :: VectorBitArray -> [Bool]
 toList = V.toList . getVec
 
 instance RankSelectArray VectorBitArray where
-  generateEmpty size = VectorBitArray (V.generate size (const False))
-  setBits            = flip setBits'
-  select arr q i     = fromMaybe (-1) (select' q i arr)
-  rank arr q i       = rank' q i arr
-  getBit i arr       = getVec arr V.! i
-  getSize            = length . getVec
-  getOneCount        = length . (filter id) . toList
+  generateEmpty size            = VectorBitArray (V.generate size (const False))
+  setBits                       = flip setBits'
+  select arr q i                = fromMaybe (-1) (select' q i arr)
+  rank arr q i                  = rank' q i arr
+  getBit i (VectorBitArray arr) = fromMaybe False (arr V.!? i)
+  getSize                       = length . getVec
+  getOneCount                   = length . filter id . toList
 
 instance Show VectorBitArray where
   show = foldMap (\bit -> if bit then "1" else "0") . getVec

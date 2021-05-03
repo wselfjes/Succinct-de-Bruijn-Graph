@@ -20,7 +20,7 @@ data RankSelectMaps k v = RankSelectMaps
 
 -- | Transform list of lists into RankSelectMaps
 --
--- >>> 
+-- >>> fromListsAscN id 10 
 fromListsAscN
   :: (Eq k, Eq v)
   => (k -> Int)
@@ -37,6 +37,10 @@ fromListsAscN toInt n kvss
 
 
 
+-- | Transform two list of (k,v) pairs into RankSelectMaps
+--
+-- >>> fromListsAscOfTwo id 10 [[(3, "a"), (5, "b"), (7, "d")], [(2, "b"), (4, "d"), (7, "c")]]
+-- Hello
 fromListsAscOfTwo
   :: (Eq k, Eq v)
   => (k -> Int)

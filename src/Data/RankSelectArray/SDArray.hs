@@ -8,6 +8,7 @@ module Data.RankSelectArray.SDArray where
 
 import qualified Data.IntMap                         as IntMap
 import           Data.RankSelectArray.Class
+import           Data.RankSelectArray.DenseArray
 import           Data.RankSelectArray.VectorBitArray
 
 import           Data.Bits                           (Bits (shiftL, shiftR, (.&.), (.|.)),
@@ -153,7 +154,7 @@ sdarrayRank SDArray{..} True pos = getPos y' x'
     getPos :: Int -> Int -> Int
     getPos y x
       | not (getBit y upperBits) = x
-      | (fromIntegral . toInteger) (lowerBits !!! (fromIntegral x)) >= j = if (fromIntegral . toInteger) (lowerBits !!! (fromIntegral x)) == j then x + 1 else x
+      | (fromIntegral . toInteger) (lowerBits !!! fromIntegral x) >= j = if (fromIntegral . toInteger) (lowerBits !!! fromIntegral x) == j then x + 1 else x
       | otherwise = getPos (y + 1) (x + 1)
 
 

@@ -4,6 +4,9 @@ import           Data.Maybe
 import           Data.RankSelectArray.Class
 
 
+-- $setup
+-- >>> import Data.RankSelectArray.SDArray (SDArray')
+
 data Diff a b = Diff a b
     deriving (Show)
 
@@ -20,6 +23,11 @@ instance (RankSelectArray a, RankSelectArray b) => RankSelectArray (Diff a b) wh
 -- ** Consturctors
 
 -- | Make Diff out of two lists of ones positions, for better storage performance |Right| << |Left|
+--
+-- >>> fromListsAsc 5 [1, 2, 3, 4] [1, 2] :: Diff SDArray' SDArray'
+-- Diff 011110 011000
+-- >>> fromListsAsc 5 [1, 2, 3, 4] [] :: Diff SDArray' SDArray'
+-- Diff 011110 000000
 fromListsAsc
   :: (RankSelectArray a, RankSelectArray b)
   => Int   -- ^ Size of RankSelectArray
@@ -34,6 +42,15 @@ fromListsAsc size leftOnes rightOnes = diff
 -- ** Query operations
 
 -- | Select operation on diff
+--
+-- >>> diffSelect (fromListsAsc 5 [1, 2, 3, 4] [1, 2] :: Diff SDArray' SDArray') True 1
+-- Just 3
+-- >>> diffSelect (fromListsAsc 5 [1, 2, 3, 4] [1, 2] :: Diff SDArray' SDArray') True 3
+-- Nothing
+-- >>> diffSelect (fromListsAsc 5 [1, 2, 3, 4] [] :: Diff SDArray' SDArray') True 1
+-- Just 1
+-- >>> diffSelect (fromListsAsc 5 [1, 2, 3, 4] [] :: Diff SDArray' SDArray') True 3
+-- Just 3
 diffSelect
   :: (RankSelectArray a, RankSelectArray b)
   => Diff a b
