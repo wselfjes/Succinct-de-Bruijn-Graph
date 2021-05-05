@@ -28,7 +28,7 @@ data RankSelectMaps k v = RankSelectMaps
 -- | Transform list of lists into RankSelectMaps
 --
 -- >>> fromListsAscN fromBoundedEnum 16 ([[("AT", 'a'), ("GT", 'b'), ("TT", 'd')], [("AG", 'b'), ("CG", 'd'), ("TT", 'c')]] :: [[(FixedList 2 (Letter "ACGT"), Char)]])
--- Test
+-- RankSelectMaps {commonPart = 00000000000000010, getListMap = [fromListAscN fromBoundedEnum 32 3 [("AT",'a'),("GT",'b'),("TT",'d')],fromListAscN fromBoundedEnum 32 3 [("AG",'b'),("CG",'d'),("TT",'c')]]}
 fromListsAscN
   :: (Eq k, Eq v)
   => (k -> Int)
@@ -47,8 +47,8 @@ fromListsAscN toInt n kvss
 
 -- | Transform two list of (k,v) pairs into RankSelectMaps
 --
--- >>> fromListsAscOfTwo fromBoundedEnum 16 (unsafeFixedList @2 [[("AT", 'a'), ("GT", 'b'), ("TT", 'd')], [("AG", 'b'), ("CG", 'd'), ("TT", 'c')]] :: FixedList 2 (FixedList 2 (Letter "ACGT"), Char))
--- Hello
+-- >>> fromListsAscOfTwo fromBoundedEnum 16 (unsafeFixedList @2 [[("AT", 'a'), ("GT", 'b'), ("TT", 'd')], [("AG", 'b'), ("CG", 'd'), ("TT", 'c')]] :: FixedList 2 [(FixedList 2 (Letter "ACGT"), Char)])
+-- RankSelectMaps {commonPart = 00000000000000010, getListMap = [fromListAscN fromBoundedEnum 32 3 [("AT",'a'),("GT",'b'),("TT",'d')],fromListAscN fromBoundedEnum 32 3 [("AG",'b'),("CG",'d'),("TT",'c')]]}
 fromListsAscOfTwo
   :: (Eq k, Eq v)
   => (k -> Int)
