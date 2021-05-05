@@ -11,6 +11,13 @@ import qualified Data.Vector                  as V
 
 import qualified Data.Vector                  as Vector
 
+-- $setup
+-- >>> :set -XTypeApplications
+-- >>> :set -XDataKinds
+-- >>> import Data.Enum.FixedList
+-- >>> import Data.Enum.Letter
+-- >>> import Data.Enum.Utils
+
 -- | List of rank select maps over UnionDiff
 data RankSelectMaps k v = RankSelectMaps
   { commonPart :: SDArray'
@@ -20,7 +27,8 @@ data RankSelectMaps k v = RankSelectMaps
 
 -- | Transform list of lists into RankSelectMaps
 --
--- >>> fromListsAscN id 10 
+-- >>> fromListsAscN fromBoundedEnum 16 ([[("AT", 'a'), ("GT", 'b'), ("TT", 'd')], [("AG", 'b'), ("CG", 'd'), ("TT", 'c')]] :: [[(FixedList 2 (Letter "ACGT"), Char)]])
+-- Test
 fromListsAscN
   :: (Eq k, Eq v)
   => (k -> Int)
@@ -39,7 +47,7 @@ fromListsAscN toInt n kvss
 
 -- | Transform two list of (k,v) pairs into RankSelectMaps
 --
--- >>> fromListsAscOfTwo id 10 [[(3, "a"), (5, "b"), (7, "d")], [(2, "b"), (4, "d"), (7, "c")]]
+-- >>> fromListsAscOfTwo fromBoundedEnum 16 (unsafeFixedList @2 [[("AT", 'a'), ("GT", 'b'), ("TT", 'd')], [("AG", 'b'), ("CG", 'd'), ("TT", 'c')]] :: FixedList 2 (FixedList 2 (Letter "ACGT"), Char))
 -- Hello
 fromListsAscOfTwo
   :: (Eq k, Eq v)

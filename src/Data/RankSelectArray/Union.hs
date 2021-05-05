@@ -111,8 +111,8 @@ unionSelect union@(Union left right) forOnes count
   | count > getOneCount union || count <= 0 = -1
   | otherwise = fromMaybe (-1) (leftResult <|> rightResult)
     where
-      leftResult = ultimateBinarySearch left (const 1) (getOneCount) selectGetItem rankCompare
-      rightResult = ultimateBinarySearch right (const 1) (getOneCount) selectGetItem rankCompare
+      leftResult = ultimateBinarySearch left (const 1) getOneCount selectGetItem rankCompare
+      rightResult = ultimateBinarySearch right (const 1) getOneCount selectGetItem rankCompare
 
       selectGetItem coll i
         | selectedValue < 0 = Nothing 
