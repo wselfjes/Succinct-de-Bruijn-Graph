@@ -25,6 +25,11 @@ data RankSelectMaps k v = RankSelectMaps
   } deriving (Show)
 
 
+empty
+  :: RankSelectMaps k v
+empty = RankSelectMaps (RSArray.generateEmpty 1) []
+
+
 -- | Transform list of lists into RankSelectMaps
 --
 -- >>> fromListsAscN fromBoundedEnum 16 ([[("AT", 'a'), ("GT", 'b'), ("TT", 'd')], [("AG", 'b'), ("CG", 'd'), ("TT", 'c')]] :: [[(FixedList 2 (Letter "ACGT"), Char)]])
@@ -41,8 +46,6 @@ fromListsAscN toInt n kvss
     where
       rankSelectMaps = fromListsAscOfTwo toInt n (unsafeFixedList $ take 2 kvss)
       rankSelectMaps' = foldr (addMap toInt n) rankSelectMaps (drop 2 kvss)
-
-
 
 
 -- | Transform two list of (k,v) pairs into RankSelectMaps
@@ -85,8 +88,20 @@ addMap toInt n kvs maps@(RankSelectMaps cp listMaps) = RankSelectMaps cp maps'
     newMap = RSMap.RankSelectMap newMapBitmap (V.fromList (map snd kvs))
     maps' = newMap : listMaps
 
+-- * Convert 'RankSelectMaps' to 
 
 toUnionsDiff
   :: RankSelectMaps k v
   -> UnionsDiff SDArray' SDArray' SDArray'
 toUnionsDiff maps = Unions (commonPart maps) ((map RSMap.rsBitmap . getListMap) maps)
+
+
+-- | Convert to lists
+--
+-- >>> toListsBoundedEnum (fromListsAscN fromBoundedEnum 16 ([[("AT", 'a'), ("GT", 'b'), ("TT", 'd')], [("AG", 'b'), ("CG", 'd'), ("TT", 'c')]] :: [[(FixedList 2 (Letter "ACGT"), Char)]]))
+--[[("AT",'a'),("GT",'b'),("TT",'d')],[("AG",'b'),("CG",'d'),("TT",'c')]]
+toListsBoundedEnum
+  :: (Bounded k, Enum k)
+  => RankSelectMaps k v
+  -> [[(k, v)]]
+toListsBoundedEnum = map RSMap.toListBoundedEnum . getListMap
