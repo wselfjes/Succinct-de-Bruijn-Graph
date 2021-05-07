@@ -6,6 +6,7 @@ import           Data.Maybe
 import           Data.RankSelectArray.Class
 import           Data.RankSelectArray.Diff
 import           Data.RankSelectArray.SDArray (SDArray')
+import           Data.RankSelectArray.Utils
 
 -- $setup
 
@@ -58,6 +59,23 @@ fromListsAsc size left right = Unions commonArray [Union leftArray commonDiffArr
     rightPart = filter (`notElem` commonPart) right
     leftArray = fromOnes size (length leftPart) leftPart
     rightArray = fromOnes size (length rightPart) rightPart
+
+
+-- | Convert two rankSelect arrays into UnionsDiff
+--
+-- >>> Data.RankSelectArray.Union.fromRankSelectArrays (fromOnes 10 3 [1, 2, 3] :: SDArray') (fromOnes 10 3 [3, 4, 5] :: SDArray') :: UnionsDiff SDArray' SDArray' SDArray' 
+-- Unions 00010000000 [Union 01100000000 (Diff 00010000000 00000000000),Union 00001100000 (Diff 00010000000 00000000000)]
+fromRankSelectArrays
+  :: (RankSelectArray arr1, RankSelectArray arr2, RankSelectArray a, RankSelectArray b, RankSelectArray c)
+  => arr1
+  -> arr2
+  -> UnionsDiff a b c
+fromRankSelectArrays first second = Unions commonArray [Union leftArray commonDiffArray , Union rightArray commonDiffArray]
+  where
+    commonArray = intersection first second
+    leftArray = difference first commonArray
+    rightArray = difference second commonArray
+    commonDiffArray = Data.RankSelectArray.Diff.fromRankSelectArrays commonArray ((generateEmpty . getSize) commonArray)
 
 
 -- ** Update unions

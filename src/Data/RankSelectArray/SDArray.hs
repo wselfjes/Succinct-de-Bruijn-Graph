@@ -57,12 +57,7 @@ sdarrayGenerateEmpty
   :: RankSelectArray darray
   => BitArraySize
   -> SDArray darray
-sdarrayGenerateEmpty _ = SDArray
-  { lowerBits = empty
-  , upperBits = generateEmpty 0
-  , bitVectorSize = 0
-  , bitsOffset = 1
-  }
+sdarrayGenerateEmpty size = fromOnes size 0 []
 
 -- | Set bits in sdarray.
 --

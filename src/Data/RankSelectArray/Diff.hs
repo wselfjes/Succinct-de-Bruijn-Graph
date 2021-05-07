@@ -38,6 +38,9 @@ fromListsAsc size leftOnes rightOnes = diff
   where
     diff = Diff (fromOnes size (length leftOnes) leftOnes) (fromOnes size (length rightOnes) rightOnes)
 
+fromRankSelectArrays :: a -> b -> Diff a b
+fromRankSelectArrays = Diff
+
 
 -- ** Query operations
 

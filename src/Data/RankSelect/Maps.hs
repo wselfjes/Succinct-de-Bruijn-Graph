@@ -105,3 +105,20 @@ toListsBoundedEnum
   => RankSelectMaps k v
   -> [[(k, v)]]
 toListsBoundedEnum = map RSMap.toListBoundedEnum . getListMap
+
+
+-- | Convert two maps into RankSelectMaps
+unionOfTwoMaps
+  :: (Enum k, Bounded k, RSArray.RankSelectArray t)
+  => RSMap.RankSelectMap t k v
+  -> RSMap.RankSelectMap t k v
+  -> RankSelectMaps k v
+unionOfTwoMaps (RSMap.RankSelectMap arr1 values1) (RSMap.RankSelectMap arr2 values2) = maps
+  where
+    maps = RankSelectMaps cp listMaps
+    listMaps = zipWith RSMap.RankSelectMap uniqueParts [values1, values2]
+    Unions cp uniqueParts = unionOfTwo
+    unionOfTwo = fromRankSelectArrays arr1 arr2
+
+    
+
