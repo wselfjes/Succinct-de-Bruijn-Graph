@@ -10,6 +10,8 @@ import           Data.RankSelectArray.Union
 import qualified Data.Vector                  as V
 
 import qualified Data.Vector                  as Vector
+import qualified Data.Bifunctor               as Bifunctor
+import           Data.List.Utils
 
 -- $setup
 -- >>> :set -XTypeApplications
@@ -17,6 +19,7 @@ import qualified Data.Vector                  as Vector
 -- >>> import Data.Enum.FixedList
 -- >>> import Data.Enum.Letter
 -- >>> import Data.Enum.Utils
+-- >>> import Data.DNA.Assembly
 
 -- | List of rank select maps over UnionDiff
 data RankSelectMaps k v = RankSelectMaps
@@ -58,12 +61,42 @@ fromListsAscOfTwo
   -> Int
   -> FixedList 2 [(k, v)]
   -> RankSelectMaps k v
-fromListsAscOfTwo toInt n (FixedList kvss) = RankSelectMaps {commonPart=commonPartArray, getListMap=maps}
+fromListsAscOfTwo =  fromListsAscOfTwoWith const
+
+-- | Transform two list of (k,v) pairs into RankSelectMaps
+--
+-- >>> fromListsAscOfTwoWith const fromBoundedEnum 16 (unsafeFixedList @2 [[("AT", 'a'), ("GT", 'b'), ("TT", 'd')], [("AG", 'b'), ("CG", 'd'), ("TT", 'c')]] :: FixedList 2 [(FixedList 2 (Letter "ACGT"), Char)])
+-- RankSelectMaps {commonPart = 00000000000000010, getListMap = [fromListAscN fromBoundedEnum 32 3 [("AT",'a'),("GT",'b'),("TT",'d')],fromListAscN fromBoundedEnum 32 3 [("AG",'b'),("CG",'d'),("TT",'c')]]}
+-- >>> fromListsAscOfTwoWith (+) fromBoundedEnum 16 (unsafeFixedList @2 [[("AT", 1), ("GT", 1), ("TT", 1)], [("AG", 1), ("CG", 1), ("TT", 1)]] :: FixedList 2 [(FixedList 2 (Letter "ACGT"), Int)])
+-- RankSelectMaps {commonPart = 00000000000000010, getListMap = [fromListAscN fromBoundedEnum 32 3 [("AT",1),("GT",1),("TT",1)],fromListAscN fromBoundedEnum 32 3 [("AG",1),("CG",1),("TT",1)]]}
+-- >>> fromListsAscOfTwoWith (+) fromBoundedEnum 16 (unsafeFixedList @2 [[("AT", 1), ("AT", 1), ("AT", 1),("AT", 1),("GT", 1), ("TT", 1)], [("AG", 1), ("CG", 1), ("TT", 1)]] :: FixedList 2 [(FixedList 2 (Letter "ACGT"), Int)])
+-- RankSelectMaps {commonPart = 00000000000000010, getListMap = [fromListAscN fromBoundedEnum 32 3 [("AT",4),("GT",1),("TT",1)],fromListAscN fromBoundedEnum 32 3 [("AG",1),("CG",1),("TT",1)]]}
+fromListsAscOfTwoWith
+  :: (Eq k, Eq v)
+  => (v -> v -> v)
+  -> (k -> Int)
+  -> Int
+  -> FixedList 2 [(k, v)]
+  -> RankSelectMaps k v
+fromListsAscOfTwoWith with toInt n kvss = fromListsEnumOfTwoWith with n (fmap (map (Bifunctor.first toInt)) kvss)
+
+-- | Convert two lists into rank select maps
+--
+-- >>> fromListsEnumOfTwoWith (+) 64 (unsafeFixedList @2 [[(0,1),(1,1),(5,1),(20,1),(16,1),(1,1),(5,1)], [(0,1),(1,1),(6,1),(24,1),(32,1),(1,1),(5,1)]]) :: RankSelectMaps (Edge 2 (Letter "ACGT")) Int
+-- RankSelectMaps {commonPart = 11000100000000000000000000000000000000000000000000000000000000000, getListMap = [fromListAscN fromBoundedEnum 128 5 [("AAA",1),("AAC",2),("ACC",2),("CAA",1),("CCA",1)],fromListAscN fromBoundedEnum 128 6 [("AAA",1),("AAC",2),("ACC",1),("ACG",1),("CGA",1),("GAA",1)]]}
+fromListsEnumOfTwoWith
+  :: (Eq k, Eq v)
+  => (v -> v -> v)
+  -> Int
+  -> FixedList 2 [(Int, v)]
+  -> RankSelectMaps k v
+fromListsEnumOfTwoWith combine n (FixedList kvss) = RankSelectMaps {commonPart=commonPartArray, getListMap=maps}
   where
-    maps = zipWith (\up vs -> RSMap.RankSelectMap up (Vector.fromList (map snd vs))) uniqueParts kvss
+    maps = zipWith (\up vs -> RSMap.RankSelectMap up (Vector.fromList (map snd vs))) uniqueParts kvss'
     (Unions commonPartArray uniqueParts) = unionOfTwo
-    unionOfTwo = fromListsAsc n (map (toInt . fst) first) (map (toInt . fst) second)
-    (first:(second:_)) = kvss
+    unionOfTwo = fromListsAsc n (map fst first) (map fst second)
+    kvss'@(first:(second:_)) = fmap (nubSortOnWith combine' fst) kvss
+    combine' (k, v) (_, v') =  (k, v `combine` v')
 
 
 getById

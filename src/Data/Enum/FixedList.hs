@@ -1,4 +1,5 @@
 {-# LANGUAGE DataKinds           #-}
+{-# LANGUAGE DeriveFunctor       #-}
 {-# LANGUAGE FlexibleContexts    #-}
 {-# LANGUAGE FlexibleInstances   #-}
 {-# LANGUAGE KindSignatures      #-}
@@ -21,7 +22,7 @@ import           Data.List.Utils  (chunksOf)
 -- * Lists of fixed length
 
 newtype FixedList (n :: Nat) a = FixedList { getFixedList :: [a] }
-  deriving (Eq, Ord, Show)
+  deriving (Eq, Ord, Show, Functor)
 
 instance {-# OVERLAPPING #-} Show (FixedList n (Letter s)) where
   show (FixedList xs) = show (map getLetter xs)
