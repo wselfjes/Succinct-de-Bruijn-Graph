@@ -13,7 +13,10 @@ import           GHC.TypeLits
 -- * Alphabet from a type-level string
 
 newtype Letter (alphabet :: Symbol) = Letter { getLetter :: Char }
-  deriving (Eq, Ord, Show)
+  deriving (Eq, Ord)
+
+instance Show (Letter a) where
+  show (Letter l) = show l
 
 unsafeLetters :: forall alphabet. KnownSymbol alphabet => String -> [Letter alphabet]
 unsafeLetters = map unsafeLetter

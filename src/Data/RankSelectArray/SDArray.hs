@@ -8,6 +8,7 @@ module Data.RankSelectArray.SDArray where
 
 import qualified Data.IntMap                         as IntMap
 import           Data.RankSelectArray.Class
+import           Data.RankSelectArray.DenseArray
 import           Data.RankSelectArray.VectorBitArray
 
 import           Data.Bits                           (Bits (shiftL, shiftR, (.&.), (.|.)),
@@ -27,8 +28,8 @@ data SDArray darray = SDArray
     }
     deriving (Eq)
 
-countOnes :: SDArray darray -> Int
-countOnes = fromIntegral . toInteger . length . lowerBits
+countOnes :: (RankSelectArray darray) => SDArray darray -> Int
+countOnes = ceiling . (/2) . fromIntegral .  getSize . upperBits
 
 type SDArray' = SDArray VectorBitArray
 
@@ -56,12 +57,7 @@ sdarrayGenerateEmpty
   :: RankSelectArray darray
   => BitArraySize
   -> SDArray darray
-sdarrayGenerateEmpty _ = SDArray
-  { lowerBits = empty
-  , upperBits = generateEmpty 0
-  , bitVectorSize = 0
-  , bitsOffset = 1
-  }
+sdarrayGenerateEmpty size = fromOnes size 0 []
 
 -- | Set bits in sdarray.
 --
@@ -143,7 +139,7 @@ sdarrayRank
   -> Int
   -> Int
 sdarrayRank _ False _ = error "rank for SDArray is not implemented (for 0)"
-sdarrayRank SDArray{..} True pos = getPos y' x'
+sdarrayRank SDArray{..} True pos = if getPos y' x' < 0 then 0 else getPos y' x'
   where
     upBit = getUpperBits bitsOffset pos
     y' = 1 + select upperBits False upBit
@@ -153,7 +149,7 @@ sdarrayRank SDArray{..} True pos = getPos y' x'
     getPos :: Int -> Int -> Int
     getPos y x
       | not (getBit y upperBits) = x
-      | (fromIntegral . toInteger) (lowerBits !!! (fromIntegral x)) >= j = if (fromIntegral . toInteger) (lowerBits !!! (fromIntegral x)) == j then x + 1 else x
+      | (fromIntegral . toInteger) (lowerBits !!! fromIntegral x) >= j = if (fromIntegral . toInteger) (lowerBits !!! fromIntegral x) == j then x + 1 else x
       | otherwise = getPos (y + 1) (x + 1)
 
 

@@ -1,4 +1,5 @@
 {-# LANGUAGE DataKinds           #-}
+{-# LANGUAGE DeriveFunctor       #-}
 {-# LANGUAGE FlexibleContexts    #-}
 {-# LANGUAGE FlexibleInstances   #-}
 {-# LANGUAGE KindSignatures      #-}
@@ -21,7 +22,7 @@ import           Data.List.Utils  (chunksOf)
 -- * Lists of fixed length
 
 newtype FixedList (n :: Nat) a = FixedList { getFixedList :: [a] }
-  deriving (Eq, Ord, Show)
+  deriving (Eq, Ord, Show, Functor)
 
 instance {-# OVERLAPPING #-} Show (FixedList n (Letter s)) where
   show (FixedList xs) = show (map getLetter xs)
@@ -38,16 +39,16 @@ unsafeFixedList xs
     n = fromIntegral (natVal (Proxy :: Proxy n))
 
 instance (KnownNat n, Bounded a, Enum a) => Enum (FixedList n a) where
-  fromEnum (FixedList xs) = sum (zipWith fromSymbol xs [0..])
+  fromEnum (FixedList xs) = sum (zipWith fromSymbol (reverse xs) [0..])
     where
       fromSymbol x i = fromBoundedEnum x * (base ^ i)
       base = boundedEnumSize xs
 
-  toEnum i = FixedList (unpadded <> replicate pad minBound)
+  toEnum i = FixedList (replicate pad minBound <> unpadded)
     where
       n = fromIntegral (natVal (Proxy @n))
       pad = n - length unpadded
-      unpadded = go i
+      unpadded = reverse (go i)
       base = boundedEnumSize (Proxy :: Proxy a)
       go k
         | k > 0 = toBoundedEnum m : go d
@@ -72,7 +73,7 @@ fixedChunks = map FixedList . chunksOf n
   where
     n = fromIntegral (natVal (Proxy :: Proxy n))
 
--- | Efficiently compute enum values of 'FixedList' chunks.
+-- | Efficiently compute enum values of 'FixedList' chunks. #TODO: FIX
 --
 -- @
 -- fixedBoundedEnumChunks = map fromEnum . fixedChunks

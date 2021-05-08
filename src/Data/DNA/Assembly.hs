@@ -11,7 +11,7 @@ import           Data.List           (nub)
 import           Data.Proxy
 import           GHC.TypeLits
 
-import           Data.RankSelect.Map (RankSelectMap)
+import           Data.RankSelect.Map (RankSelectMap')
 import qualified Data.RankSelect.Map as RSMap
 
 import           Data.Enum.FixedList
@@ -47,7 +47,7 @@ readChunks = map (Chunk . FixedList) . chunksOf n
     n = fromIntegral (natVal (Proxy :: Proxy n))
 
 newtype DeBruijnGraph n a = DeBruijnGraph
-  { edgeCount :: RankSelectMap (Edge n a) Int }
+  { edgeCount :: RankSelectMap' (Edge n a) Int }
 
 instance (Show (Edge n a), Bounded a, Enum a, KnownNat (n + 1))
   => Show (DeBruijnGraph n a) where
@@ -65,39 +65,40 @@ edgeNodes :: Edge n a -> [Node n a]
 edgeNodes (FixedList xs) = [FixedList (init xs), FixedList (tail xs)]
 
 -- |
--- >>> edges (graphFromReads @2 [unsafeLetters @"ACTG" "AAACCAACC"])
--- ["AAA","CAA","CCA","AAC","ACC"]
+-- >>> edges (graphFromReads @2 [unsafeLetters @"ACGT" "AAACCAACC"])
+-- ["AAA","AAC","ACC","CAA","CCA"]
 edges :: (Bounded a, Enum a, KnownNat (n + 1)) => DeBruijnGraph n a -> [Edge n a]
 edges = RSMap.keys toBoundedEnum . edgeCount
 
 -- |
 --
--- >>> nodes (graphFromReads @2 [unsafeLetters @"ACTG" "AAACCAACC"])
--- ["AA","CA","CC","AC"]
+-- >>> nodes (graphFromReads @2 [unsafeLetters @"ACGT" "AAACCAACC"])
+-- ["AA","AC","CC","CA"]
 nodes
   :: (Bounded a, Enum a, Eq a, KnownNat n, KnownNat (n + 1))
   => DeBruijnGraph n a -> [Node n a]
 nodes = nub . concatMap edgeNodes . edges
 
 -- |
---
--- >>> graphFromReads @2 [unsafeLetters @"ACTG" "AAACCAACC"]
--- [("AAA",1),("CAA",1),("CCA",1),("AAC",2),("ACC",2)]
--- >>> (Data.RankSelectArray.SDArray.toOnes . Data.RankSelect.Map.rsBitmap . edgeCount) (graphFromReads @1 [unsafeLetters @"ACGT" "TTCGGAAG"])
+-- >>> graphFromReads @2 [unsafeLetters @"ACGT" "AAACCAACC"]
+-- [("AAA",1),("AAC",2),("ACC",2),("CAA",1),("CCA",1)]
+-- >>> (Data.RankSelectArray.Class.toOnes . Data.RankSelect.Map.rsBitmap . edgeCount) (graphFromReads @1 [unsafeLetters @"ACGT" "TTCGGAAG"])
 -- [0,2,6,8,10,13,15]
 graphFromReads
-  :: forall n a. (KnownNat (n + 1), Bounded a, Enum a, Show a)
-  => [[a]] -> DeBruijnGraph n a
+  :: forall n.  (KnownNat (n + 1), KnownNat n)
+  => [ReadSegment] -> DeBruijnGraph n Nucleotide
 graphFromReads segments = DeBruijnGraph $ RSMap.fromEnumListWith (+) size
   [ (chunkId, 1)
   | segment <- segments
-  , chunkId <- (fixedBoundedEnumChunks (Proxy @(n + 1)) segment)
-  ] where size = boundedEnumSize (Proxy @(Edge n a))
+  , chunkId <- map fromEnum (readChunks segment :: [Chunk (n + 1)])
+  ] where
+      size = 4 ^ (n + 1)
+      n = fromIntegral (natVal (Proxy :: Proxy n))
 
 -- | Successor edges of a node.
 --
--- >>> Data.DNA.Assembly.successorEdges (graphFromReads @2 [unsafeLetters @"AB" "AABABBA"]) "AB"
--- [("ABA",1),("ABB",1)]
+-- >>> Data.DNA.Assembly.successorEdges (graphFromReads @2 [unsafeLetters @"ACGT" "ACCGGTT"]) "AC"
+-- [("ACC",1)]
 successorEdges
   :: forall n a. (Bounded a, Enum a, KnownNat n, KnownNat (n + 1))
   => DeBruijnGraph n a
@@ -127,3 +128,11 @@ markEdge (DeBruijnGraph graph) edge = DeBruijnGraph graph'
   where
     graph' = RSMap.update (subtract 1) edge graph
 
+
+
+-- * Assembly
+
+assembly
+  :: DeBruijnGraph n a
+  -> [Contig]
+assembly deBruijnGraph = []

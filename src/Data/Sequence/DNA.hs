@@ -21,12 +21,7 @@ data Nucleotide = A
     deriving (Enum, Eq, Show, Bounded, Ord)
 
 -- | DNA is a sequence of 'Nucleotide's.
---newtype DNASequence = DNASequence { getDNASequence :: Sequence Nucleotide }
---  deriving (Eq, Generic)
 type DNASequence = Sequence Nucleotide
-
---newtype DNASequence = DNASequence { getDNASequence :: [Nucleotide] }
---  deriving (Eq, Generic)
 
 instance (Show a) => Show (Sequence a) where
   show = concatMap show . getSequence

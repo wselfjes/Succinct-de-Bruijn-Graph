@@ -1,3 +1,6 @@
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
+
 module Data.RankSelectArray.UnionSpec where
 
 import           Data.List
@@ -11,21 +14,19 @@ import           Test.Hspec
 import           Test.QuickCheck                         hiding (getSize)
 
 
-instance (RankSelectArray a, RankSelectArray b) => Arbitrary (Unions a b) where
+instance (RankSelectArray a, RankSelectArray b) => Arbitrary (Union a b) where
   arbitrary = do
     leftBools <- (arbitrary :: Gen [Bool])
     rightBools <- (arbitrary :: Gen [Bool])
+    let rightBools' = filter (`notElem` leftBools) rightBools
     let left = elemIndices True leftBools
-    let right = elemIndices True rightBools
+    let right = elemIndices True rightBools'
     Positive leftSizeOffset <- arbitrary
     Positive rightSizeOffset <- arbitrary
-    return $ Data.RankSelectArray.Union.fromListsAsc (length left + leftSizeOffset) (length right + rightSizeOffset) left right
-
-instance (RankSelectArray a, RankSelectArray b) => Arbitrary (Union a b) where
-  arbitrary = do
-    unions <- arbitrary
-    let union = getUnion 0 unions
-    return union
+    let size = (max (length leftBools + leftSizeOffset) (length rightBools + rightSizeOffset))
+    let leftArray = fromOnes size (length left) left
+    let rightArray = fromOnes size (length right) right
+    return $ Data.RankSelectArray.Union.Union leftArray rightArray
 
 
 testSelect :: IO ()

@@ -1,10 +1,10 @@
 cabal-version: 1.24
 
--- This file has been generated from package.yaml by hpack version 0.31.2.
+-- This file has been generated from package.yaml by hpack version 0.33.0.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 65a129941c79b7363cf43ae25a0e2540ed885830f03ec92d2f9b4f8019e9f0e7
+-- hash: a62a7eac5a1d35092683ca125c67f75a04e9d4e19040e42af840f3c1609b179f
 
 name:           SuccinctDeBruijnGraph
 version:        0.1.0.0
@@ -30,6 +30,7 @@ custom-setup
 library
   exposed-modules:
       Data.DNA.Assembly
+      Data.DNA.SetDeBruijnGraphs
       Data.Enum.FixedList
       Data.Enum.Letter
       Data.Enum.Utils
@@ -37,12 +38,14 @@ library
       Data.Graph.DeBruijnGraph
       Data.List.Utils
       Data.RankSelect.Map
+      Data.RankSelect.Maps
       Data.RankSelect.Set
       Data.RankSelectArray.Class
       Data.RankSelectArray.DenseArray
       Data.RankSelectArray.Diff
       Data.RankSelectArray.SDArray
       Data.RankSelectArray.Union
+      Data.RankSelectArray.Utils
       Data.RankSelectArray.VectorBitArray
       Data.Sequence.DNA
       Plotting.DeBruijnGraphPlotting
@@ -58,6 +61,7 @@ library
     , containers
     , doctest
     , fasta
+    , ghc-typelits-knownnat
     , graphviz
     , hashmap
     , hw-packed-vector
@@ -81,6 +85,7 @@ executable SuccinctDeBruijnGraph-exe
     , containers
     , doctest
     , fasta
+    , ghc-typelits-knownnat
     , graphviz
     , hashmap
     , hw-packed-vector
@@ -104,6 +109,7 @@ test-suite doctests
     , containers
     , doctest
     , fasta
+    , ghc-typelits-knownnat
     , graphviz
     , hashmap
     , hw-packed-vector
@@ -140,6 +146,7 @@ test-suite spec
     , containers
     , doctest
     , fasta
+    , ghc-typelits-knownnat
     , graphviz
     , hashmap
     , hspec

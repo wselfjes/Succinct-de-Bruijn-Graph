@@ -5,21 +5,24 @@ import           Control.Applicative
 import           Data.Maybe
 import           Data.RankSelectArray.Class
 import           Data.RankSelectArray.Diff
+import           Data.RankSelectArray.SDArray (SDArray')
+import           Data.RankSelectArray.Utils
 
+-- $setup
 
 -- | Disjoint Union of two RankSelectArray
 data Union a b = Union a b
     deriving (Eq, Show)
 
--- | Unions of multiple RankSelectArrays where a is a common part and b's are uniq part
-data Unions a b = Unions a [b]
-    deriving (Eq, Show)
+--- | 
+data Unions a b c = Unions a [Union b c]
+  deriving (Eq, Show)
 
 -- | Combination of Union and Diff structure
 type UnionDiff a b c = Union a (Diff b c)
 
 -- | Combination of Unions and Diff structure
-type UnionsDiff a b c = Unions a (Diff b c)
+type UnionsDiff a b c = Unions a b (Diff a c)
 
 
 instance (RankSelectArray a, RankSelectArray b) => RankSelectArray (Union a b) where
@@ -34,53 +37,88 @@ instance (RankSelectArray a, RankSelectArray b) => RankSelectArray (Union a b) w
 
 -- | Convert two asc list to Unions Structure
 -- The intersection of two arrays must be greater than 50%
+--
+-- >>> Data.RankSelectArray.Union.fromListsAsc 10 [4, 6, 8, 10] [1, 2, 3, 5, 7, 9] :: UnionsDiff SDArray' SDArray' SDArray'
+-- Unions 00000000000 [Union 00001010101 (Diff 00000000000 00000000000),Union 01110101010 (Diff 00000000000 00000000000)] 
+--
+-- >>> Data.RankSelectArray.Union.fromListsAsc 10 [0, 1, 2, 4, 6, 8, 10] [1, 2, 3, 5, 7, 9] :: UnionsDiff SDArray' SDArray' SDArray'
+-- Unions 01100000000 [Union 10001010101 (Diff 01100000000 00000000000),Union 00010101010 (Diff 01100000000 00000000000)] 
 fromListsAsc
-  :: (RankSelectArray a, RankSelectArray b)
-  => Int  -- ^ Size of left array
-  -> Int  -- ^ Size of right array
+  :: (RankSelectArray a, RankSelectArray b, RankSelectArray c)
+  => Int  -- ^ Size
   -> [Int] -- ^ Left ones
   -> [Int] -- ^ Right ones
-  -> Unions a b
-fromListsAsc leftSize rightSize left right = Unions commonArray [leftArray, rightArray]
+  -> UnionsDiff a b c
+fromListsAsc size left right = Unions commonArray [Union leftArray commonDiffArray , Union rightArray commonDiffArray]
   where
-    commonPart = filter (\x -> x `elem` right) right
-    commonSize = length commonPart + 1
+    commonPart = filter (`elem` right) left
+    commonSize = size
     commonArray = fromOnes commonSize (length commonPart) commonPart
-    leftPart = filter (\x -> not (x `elem` commonPart)) left
-    rightPart = filter (\x -> not (x `elem` commonPart)) right
-    leftArray = fromOnes leftSize (length leftPart) leftPart
-    rightArray = fromOnes rightSize (length rightPart) rightPart
+    commonDiffArray = Data.RankSelectArray.Diff.fromListsAsc size commonPart []
+    leftPart = filter (`notElem` commonPart) left
+    rightPart = filter (`notElem` commonPart) right
+    leftArray = fromOnes size (length leftPart) leftPart
+    rightArray = fromOnes size (length rightPart) rightPart
+
+
+-- | Convert two rankSelect arrays into UnionsDiff
+--
+-- >>> Data.RankSelectArray.Union.fromRankSelectArrays (fromOnes 10 3 [1, 2, 3] :: SDArray') (fromOnes 10 3 [3, 4, 5] :: SDArray') :: UnionsDiff SDArray' SDArray' SDArray' 
+-- Unions 00010000000 [Union 01100000000 (Diff 00010000000 00000000000),Union 00001100000 (Diff 00010000000 00000000000)]
+fromRankSelectArrays
+  :: (RankSelectArray arr1, RankSelectArray arr2, RankSelectArray a, RankSelectArray b, RankSelectArray c)
+  => arr1
+  -> arr2
+  -> UnionsDiff a b c
+fromRankSelectArrays first second = Unions commonArray [Union leftArray commonDiffArray , Union rightArray commonDiffArray]
+  where
+    commonArray = intersection first second
+    leftArray = difference first commonArray
+    rightArray = difference second commonArray
+    commonDiffArray = Data.RankSelectArray.Diff.fromRankSelectArrays commonArray ((generateEmpty . getSize) commonArray)
 
 
 -- ** Update unions
 
 -- | Add array into UnionsDiff, puts in front of uniqParts
-addArrayToUnion
+--
+-- >>> addArrayToUnions 10 [0, 8] (Data.RankSelectArray.Union.fromListsAsc 10 [0, 1, 2, 4, 6, 8] [1, 2, 3, 5, 7, 9]) :: UnionsDiff SDArray' SDArray' SDArray'
+-- Unions 01100000000 [Union 10000000100 (Diff 01100000000 01100000000),Union 10001010100 (Diff 01100000000 00000000000),Union 00010101010 (Diff 01100000000 00000000000)] 
+addArrayToUnions
   :: (RankSelectArray a, RankSelectArray b, RankSelectArray c)
   => Int -- ^ Size of an array
   -> [Int] -- ^ Ones
   -> UnionsDiff a b c
   -> UnionsDiff a b c
-addArrayToUnion size ones (Unions commonPart uniqParts) = Unions commonPart (newUniqPart:uniqParts)
+addArrayToUnions size ones (Unions commonPart uniqParts) = Unions commonPart (newUniqPart:uniqParts)
   where
     commonOnes = toOnes commonPart
-    rightDiffPart = filter (\x -> not (x `elem` ones)) commonOnes
-    leftDiffPart = filter (\x -> not (x `elem` commonOnes)) ones
-    newUniqPart = Diff (fromOnes size (length leftDiffPart) leftDiffPart) (fromOnes size (length rightDiffPart) rightDiffPart)
+    uniquePart = filter (`notElem` commonOnes) ones
+    diffPart = filter (`notElem` ones) commonOnes
+    diffPartArray = fromOnes size (length diffPart) diffPart
+    uniqueArray = fromOnes size (length uniquePart) uniquePart
+    newUniqPart = Union uniqueArray (Diff commonPart diffPartArray) 
+
 
 -- ** Select Union in Unions
 
 -- | Get by index union
+-- 
+-- >>> getUnion (Data.RankSelectArray.Union.fromListsAsc 10 [0, 1, 2, 4, 6, 8] [1, 2, 3, 5, 7, 9] :: UnionsDiff SDArray' SDArray' SDArray') 0
+-- Union 10001010100 (Diff 01100000000 00000000000)
 getUnion
-  :: Int
-  -> Unions a b
-  -> Union a b
-getUnion index (Unions commonPart uniqParts) = Union commonPart (uniqParts !! index)
+  :: Unions a b c
+  -> Int
+  -> Union b c
+getUnion (Unions _ arr) = (!!) arr
 
 
 -- ** Query operations from Union
 
 -- | Left and right arrays must be disjoint
+--
+-- >>> unionSelect (getUnion (Data.RankSelectArray.Union.fromListsAsc 10 [0, 1, 2, 4, 6, 8] [1, 2, 3, 5, 7, 9] :: UnionsDiff SDArray' SDArray' SDArray') 0) True 3
+-- 2
 unionSelect
   :: (RankSelectArray a, RankSelectArray b)
   => Union a b
@@ -91,13 +129,15 @@ unionSelect union@(Union left right) forOnes count
   | count > getOneCount union || count <= 0 = -1
   | otherwise = fromMaybe (-1) (leftResult <|> rightResult)
     where
-      leftResult = ultimateBinarySearch left (const count) (const 0) (selectGetItem) rankCompare
-      rightResult = ultimateBinarySearch right (const count) (const 0) (selectGetItem) rankCompare
+      leftResult = ultimateBinarySearch left (const 1) getOneCount selectGetItem rankCompare
+      rightResult = ultimateBinarySearch right (const 1) getOneCount selectGetItem rankCompare
 
-      selectGetItem coll i = case select coll forOnes i of
-                             -1 -> Nothing
-                             v  -> Just v
-      rankCompare v = compare count (unionRank union forOnes v)
+      selectGetItem coll i
+        | selectedValue < 0 = Nothing 
+        | otherwise = Just selectedValue
+        where
+          selectedValue = select coll forOnes i
+      rankCompare v = compare count (unionRank union forOnes v) 
 
 
 
@@ -125,8 +165,8 @@ unionSetBits (Union left right) bits = Union newLeft newRight
     newRight = setBits right rightArrays
     filterFunction isLeft (_, _, Left _)  = isLeft
     filterFunction isLeft (_, _, Right _) = not isLeft
-    leftArrays = map (\(ind, value, _) -> (ind, value)) ((filter (filterFunction True)) bits)
-    rightArrays = map (\(ind, value, _) -> (ind, value)) ((filter (filterFunction False)) bits)
+    leftArrays = map (\(ind, value, _) -> (ind, value)) (filter (filterFunction True) bits)
+    rightArrays = map (\(ind, value, _) -> (ind, value)) (filter (filterFunction False) bits)
 
 -- ** Utils
 
@@ -134,12 +174,12 @@ unionSetBits (Union left right) bits = Union newLeft newRight
 ultimateBinarySearch
   :: (Ord s, Num s, Integral s)
   => f                           -- ^ Collection
-  -> (f -> s)                    -- ^ Get maximum selector
   -> (f -> s)                    -- ^ Get minimum selector
+  -> (f -> s)                    -- ^ Get maximum selector
   -> (f -> s -> Maybe a)         -- ^ Get item
   -> (a -> Ordering)             -- ^ compare values, example (compare a)
   -> Maybe a
-ultimateBinarySearch collection getMaxSelector getMinSelector getItem comp = recursion minSelector maxSelector
+ultimateBinarySearch collection getMinSelector getMaxSelector getItem comp = recursion minSelector maxSelector
   where
     maxSelector = getMaxSelector collection
     minSelector = getMinSelector collection
@@ -152,7 +192,7 @@ ultimateBinarySearch collection getMaxSelector getMinSelector getItem comp = rec
                     Just GT -> recursion (midPoint + 1) right
                     Nothing -> Nothing
         where
-          midPoint = fromInteger (ceiling ((fromIntegral (left + right)) / 2))
+          midPoint = fromInteger (ceiling (fromIntegral (left + right) / 2))
           value = collection `getItem` midPoint
           ordering = comp <$> value
 

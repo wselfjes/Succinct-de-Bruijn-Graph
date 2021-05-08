@@ -4,6 +4,9 @@ import           Data.Maybe
 import           Data.RankSelectArray.Class
 
 
+-- $setup
+-- >>> import Data.RankSelectArray.SDArray (SDArray')
+
 data Diff a b = Diff a b
     deriving (Show)
 
@@ -20,23 +23,37 @@ instance (RankSelectArray a, RankSelectArray b) => RankSelectArray (Diff a b) wh
 -- ** Consturctors
 
 -- | Make Diff out of two lists of ones positions, for better storage performance |Right| << |Left|
+--
+-- >>> fromListsAsc 5 [1, 2, 3, 4] [1, 2] :: Diff SDArray' SDArray'
+-- Diff 011110 011000
+-- >>> fromListsAsc 5 [1, 2, 3, 4] [] :: Diff SDArray' SDArray'
+-- Diff 011110 000000
 fromListsAsc
   :: (RankSelectArray a, RankSelectArray b)
   => Int   -- ^ Size of RankSelectArray
   -> [Int] -- ^ Left ones
   -> [Int] -- ^ Right ones
-  -> Maybe (Diff a b)
-fromListsAsc size leftOnes rightOnes = if length notCommon > 0
-                                       then Nothing
-                                       else Just diff
+  -> Diff a b
+fromListsAsc size leftOnes rightOnes = diff
   where
-    notCommon = filter (\x -> x `elem` rightOnes) leftOnes
-    diff = Diff (fromOnes size (length leftOnes) leftOnes) (fromOnes (length rightOnes + 1) (length rightOnes) rightOnes)
+    diff = Diff (fromOnes size (length leftOnes) leftOnes) (fromOnes size (length rightOnes) rightOnes)
+
+fromRankSelectArrays :: a -> b -> Diff a b
+fromRankSelectArrays = Diff
 
 
 -- ** Query operations
 
 -- | Select operation on diff
+--
+-- >>> diffSelect (fromListsAsc 5 [1, 2, 3, 4] [1, 2] :: Diff SDArray' SDArray') True 1
+-- Just 3
+-- >>> diffSelect (fromListsAsc 5 [1, 2, 3, 4] [1, 2] :: Diff SDArray' SDArray') True 3
+-- Nothing
+-- >>> diffSelect (fromListsAsc 5 [1, 2, 3, 4] [] :: Diff SDArray' SDArray') True 1
+-- Just 1
+-- >>> diffSelect (fromListsAsc 5 [1, 2, 3, 4] [] :: Diff SDArray' SDArray') True 3
+-- Just 3
 diffSelect
   :: (RankSelectArray a, RankSelectArray b)
   => Diff a b
