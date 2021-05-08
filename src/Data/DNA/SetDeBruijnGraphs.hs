@@ -34,13 +34,21 @@ toMultiplicityLists
 toMultiplicityLists = RSMaps.toListsBoundedEnum . getMaps
 
 
+-- | Convert reads into graphs
+--
+-- >>> graphsFromReads [[unsafeLetters @"ACGT" "AAACCAACC"],[unsafeLetters @"ACGT" "AAACGAACC"],[unsafeLetters @"ACGT" "AAACGATCC"]] :: Maybe (ColoredDeBruijnGraph 2 (Letter "ACGT"))
+-- Just [[("AAA",1),("AAC",1),("ACG",1),("ATC",1),("CGA",1),("GAT",1),("TCC",1)],[("AAA",1),("AAC",2),("ACC",2),("CAA",1),("CCA",1)],[("AAA",1),("AAC",2),("ACC",1),("ACG",1),("CGA",1),("GAA",1)]]
 graphsFromReads
-  :: (KnownNat n, KnownNat (n+1), Bounded a, Enum a)
+  :: (KnownNat n, KnownNat (n+1), Bounded a, Enum a, Eq a)
   => [[ReadSegment]]
-  -> ColoredDeBruijnGraph n a
-graphsFromReads reads = ColoredDeBruijnGraph maps
+  -> Maybe (ColoredDeBruijnGraph n a)
+graphsFromReads [] = Nothing
+graphsFromReads [_] = Nothing
+graphsFromReads [first, second] = Just (graphsFromTwoReads first second)
+graphsFromReads (first:(second:other)) = Just graphs
   where
-    maps = RSMaps.empty
+    baseGraphs = graphsFromTwoReads first second
+    graphs = foldr addReadsToGraph baseGraphs other
 
 -- | Convert two list of read segments into the colored de bruijn graph
 --
@@ -78,7 +86,17 @@ unionOfTwoGraphs (DeBruijnGraph first) (DeBruijnGraph second) = ColoredDeBruijnG
 
 
 addReadsToGraph
-  :: [ReadSegment]
+  :: forall n a. (KnownNat n, KnownNat (n+1), Bounded a, Enum a, Eq a)
+  => [ReadSegment]
   -> ColoredDeBruijnGraph n a
   -> ColoredDeBruijnGraph n a
-addReadsToGraph _ graph = graph
+addReadsToGraph r (ColoredDeBruijnGraph maps) = ColoredDeBruijnGraph newMaps
+  where
+    newMaps = addMapEnumWith (+) size chunks maps
+    size = 4 ^ (n + 1)
+    n = fromIntegral (natVal (Proxy :: Proxy n))
+    chunks = makeChunks r
+    makeChunks segments = [ (chunk, 1)
+                          | segment <- segments
+                          , chunk <- map fromEnum (readChunks segment :: [Chunk (n + 1)])
+                          ]

@@ -38,7 +38,7 @@ empty = RankSelectMaps (RSArray.generateEmpty 1) []
 -- >>> fromListsAscN fromBoundedEnum 16 ([[("AT", 'a'), ("GT", 'b'), ("TT", 'd')], [("AG", 'b'), ("CG", 'd'), ("TT", 'c')]] :: [[(FixedList 2 (Letter "ACGT"), Char)]])
 -- RankSelectMaps {commonPart = 00000000000000010, getListMap = [fromListAscN fromBoundedEnum 32 3 [("AT",'a'),("GT",'b'),("TT",'d')],fromListAscN fromBoundedEnum 32 3 [("AG",'b'),("CG",'d'),("TT",'c')]]}
 fromListsAscN
-  :: (Eq k, Eq v)
+  :: (Ord k, Eq k, Eq v)
   => (k -> Int)
   -> Int
   -> [[(k, v)]]
@@ -106,20 +106,42 @@ getById
 getById maps =  (!!) (getListMap maps)
 
 
--- | add map to existing set of maps
+-- | Add to maps another key-value list
 addMap
-  :: (k -> Int)
+  :: (Ord k)
+  => (k -> Int)
   -> Int
   -> [(k, v)]
   -> RankSelectMaps k v
   -> RankSelectMaps k v
-addMap toInt n kvs maps@(RankSelectMaps cp listMaps) = RankSelectMaps cp maps'
+addMap = addMapWith const
+
+addMapWith
+  :: (Ord k)
+  => (v -> v -> v)
+  -> (k -> Int)
+  -> Int
+  -> [(k, v)]
+  -> RankSelectMaps k v
+  -> RankSelectMaps k v
+addMapWith combine toInt n kvs = addMapEnumWith combine n (map (Bifunctor.first toInt) kvs) 
+
+addMapEnumWith
+  :: (v -> v -> v)
+  -> Int
+  -> [(Int, v)]
+  -> RankSelectMaps k v
+  -> RankSelectMaps k v
+addMapEnumWith combine n kvs maps@(RankSelectMaps cp listMaps) = RankSelectMaps cp maps'
   where
+    kvs' = nubSortOnWith combine' fst kvs
+    combine' (k, v) (_, v') =  (k, v `combine` v')
     unionsDiff = toUnionsDiff maps
-    newUnionsDiff = addArrayToUnions n (map (toInt . fst) kvs) unionsDiff
+    newUnionsDiff = addArrayToUnions n (map fst kvs') unionsDiff
     newMapBitmap = getUnion newUnionsDiff 0
-    newMap = RSMap.RankSelectMap newMapBitmap (V.fromList (map snd kvs))
+    newMap = RSMap.RankSelectMap newMapBitmap (V.fromList (map snd kvs'))
     maps' = newMap : listMaps
+
 
 -- * Convert 'RankSelectMaps' to 
 
