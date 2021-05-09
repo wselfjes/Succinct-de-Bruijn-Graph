@@ -1,4 +1,4 @@
-module Plotting.DeBruijnGraphPlotting where
+module Plotting.DeBruijnGraph where
 
 import           Data.RankSelectArray.Class
 import           Data.Graph.DeBruijnGraph

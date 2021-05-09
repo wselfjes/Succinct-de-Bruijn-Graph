@@ -5,13 +5,15 @@
 {-# LANGUAGE TypeOperators        #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Data.DNA.SetDeBruijnGraphs where
+module Data.DNA.ColoredDeBruijnGraph where
 
 import           Data.Proxy
 import           GHC.TypeLits
 
 import           Data.DNA.Assembly
 import           Data.Enum.FixedList
+import           Data.Enum.Utils
+import           Data.List
 import           Data.RankSelect.Maps as RSMaps
 
 
@@ -32,6 +34,19 @@ toMultiplicityLists
   => ColoredDeBruijnGraph n a
   -> [[(Edge n a, Int)]]
 toMultiplicityLists = RSMaps.toListsBoundedEnum . getMaps
+
+allNodes
+  :: (Bounded a, Enum a, Eq a, KnownNat n, KnownNat (n + 1))
+  => ColoredDeBruijnGraph n a
+  -> [Node n a]
+allNodes = nub . concatMap edgeNodes . allEdges
+
+
+allEdges
+  :: (Bounded a, Enum a, Eq a, KnownNat n, KnownNat (n + 1))
+  => ColoredDeBruijnGraph n a
+  -> [Edge n a]
+allEdges = nub . concat . RSMaps.keys toBoundedEnum . getMaps
 
 
 -- | Convert reads into graphs
