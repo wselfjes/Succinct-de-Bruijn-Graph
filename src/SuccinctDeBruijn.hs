@@ -15,7 +15,7 @@ import           Data.Fasta.String.Parse
 import           Data.Fasta.String.Types
 import           Data.Proxy
 import           GHC.TypeLits
-import           Plotting.DeBruijnGraph
+import           Plotting.ColoredDeBruijnGraph
 import           System.Environment
 import           System.Exit
 import           System.IO                      (BufferMode (..), hSetBuffering,
@@ -44,13 +44,22 @@ runWithArgs proxy fileName = do
   let readsDNASequences = map unsafeLetters readsString
   checkReads baseValue readsDNASequences `as` "Checking reads"
   let deBruijnGraph = graphFromReads readsDNASequences :: DeBruijnGraph base Nucleotide
-  print deBruijnGraph
-  --drawGraph deBruijnGraph `as` "Drawing deBruijnGraph"
+  writeMultiplicityList deBruijnGraph `as` "Writing as a mulitplicity list"
+  drawGraph deBruijnGraph `as` "Drawing deBruijnGraph"
   --let assembledSequence = assemblyDeBruijnUsingEulerianWalk deBruijnGraph
   --writeFile "data/result.txt" (show assembledSequence) `as` "Writing result"
 
 checkReads :: Int -> [ReadSegment] -> IO ()
-checkReads k sequences = unless (any ((< k) . length)  sequences) (die "Length of one of the read is less than base")
+checkReads k sequences = unless (any ((> k) . length)  sequences) (die "Length of one of the read is less than base")
+
+writeMultiplicityList
+  :: (KnownNat n)
+  => DeBruijnGraph n (Letter "ACGT")
+  -> IO ()
+writeMultiplicityList deBruijnGraph = do
+  let multiplicityList = toMultiplicityList deBruijnGraph 
+  writeFile "data/MultiplicityList.txt" ((unlines . map show) multiplicityList)
+  
 
 as :: IO a -> String -> IO a
 command `as` name = do
