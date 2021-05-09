@@ -22,6 +22,14 @@ newtype ELabel = RegularEdge {color :: G.Color}
 type NodeGraph a = (a, NLabel)
 type EdgeGraph a = (a, a, ELabel)
 
+deBruijnGraphParams :: G.GraphvizParams String NLabel ELabel () NLabel
+deBruijnGraphParams = G.defaultParams {
+  G.fmtNode = const $ colorAttribute $ G.RGB 0 0 0,
+  G.fmtEdge = fmtEdgeFun
+      }
+  where
+    colorAttribute color = [ G.Color $ G.toColorList [ color ] ]
+    fmtEdgeFun (_, _, RegularEdge c) = colorAttribute c
 
 toNodeEdgeList
   :: (KnownNat n, KnownNat (n+1))
@@ -37,24 +45,6 @@ toNodeEdgeList c deBruijnGraph = (nodes', edgesLabel)
                  [] edges' 
     nodes' = zip (map show (nodes deBruijnGraph)) (repeat RegularNode)
 
-deBruijnGraphParams :: G.GraphvizParams String NLabel ELabel () NLabel
-deBruijnGraphParams = G.defaultParams {
-  G.fmtNode = const $ colorAttribute $ G.RGB 0 0 0,
-  G.fmtEdge = fmtEdgeFun
-      }
-  where
-    colorAttribute color = [ G.Color $ G.toColorList [ color ] ]
-    fmtEdgeFun (_, _, RegularEdge c) = colorAttribute c
-
-drawGraph :: (KnownNat n, KnownNat (n+1)) => DeBruijnGraph n (Letter "ACGT") -> IO ()
-drawGraph deBruijnGraph = do
-    let (vs, es) = toNodeEdgeList (G.RGB 0 0 0) deBruijnGraph
-    let dotGraph = G.graphElemsToDot deBruijnGraphParams vs es :: G.DotGraph String
-    -- 3. Render it into .dot text
-    let dotText = G.printDotGraph dotGraph :: TL.Text
-    -- 4. Write the contents to a file
-    TL.writeFile "data/deBruijnGraph.dot" dotText
-
 toNodeEdgeLists 
   :: (KnownNat n, KnownNat (n+1))
   => [G.Color]
@@ -69,10 +59,14 @@ toNodeEdgeLists colors coloredDeBruijnGraph = (nodes', edgesLabel)
     edgeToNodesString side = show . side . edgeNodes
     nodes' = zip (map show (allNodes coloredDeBruijnGraph)) (repeat RegularNode)
   
+drawGraph :: (KnownNat n, KnownNat (n+1)) => DeBruijnGraph n (Letter "ACGT") -> IO ()
+drawGraph deBruijnGraph = uncurry draw (toNodeEdgeList (G.RGB 0 0 0) deBruijnGraph)
 
 drawGraphs :: (KnownNat n, KnownNat (n+1)) => ColoredDeBruijnGraph n (Letter "ACGT") -> IO ()
-drawGraphs coloredDeBruijnGraph = do
-    let (vs, es) = toNodeEdgeLists (repeat (G.RGB 0 0 0)) coloredDeBruijnGraph
+drawGraphs coloredDeBruijnGraph = uncurry draw (toNodeEdgeLists (repeat (G.RGB 0 0 0)) coloredDeBruijnGraph)
+
+draw :: [NodeGraph String] -> [EdgeGraph String] -> IO ()
+draw vs es = do
     let dotGraph = G.graphElemsToDot deBruijnGraphParams vs es :: G.DotGraph String
     -- 3. Render it into .dot text
     let dotText = G.printDotGraph dotGraph :: TL.Text
