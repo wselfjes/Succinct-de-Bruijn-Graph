@@ -15,7 +15,7 @@ import           Data.Fasta.String.Parse
 import           Data.Fasta.String.Types
 import           Data.Proxy
 import           GHC.TypeLits
-import           Plotting.DeBruijnGraphPlotting
+import           Plotting.DeBruijnGraph
 import           System.Environment
 import           System.Exit
 import           System.IO                      (BufferMode (..), hSetBuffering,

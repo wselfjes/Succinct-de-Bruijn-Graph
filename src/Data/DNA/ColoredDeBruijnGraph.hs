@@ -5,7 +5,7 @@
 {-# LANGUAGE TypeOperators        #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Data.DNA.SetDeBruijnGraphs where
+module Data.DNA.ColoredDeBruijnGraph where
 
 import           Data.Proxy
 import           GHC.TypeLits

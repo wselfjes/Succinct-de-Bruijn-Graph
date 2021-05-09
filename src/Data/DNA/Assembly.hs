@@ -59,7 +59,7 @@ toMultiplicityList
 toMultiplicityList = RSMap.toListBoundedEnum . edgeCount
 
 type Edge n = FixedList (n + 1)
-type Node n = FixedList n
+type Node n a = FixedList n a
 
 edgeNodes :: Edge n a -> [Node n a]
 edgeNodes (FixedList xs) = [FixedList (init xs), FixedList (tail xs)]
