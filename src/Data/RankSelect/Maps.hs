@@ -28,6 +28,7 @@ data RankSelectMaps k v = RankSelectMaps
   } deriving (Show)
 
 
+-- * Constructors
 empty
   :: RankSelectMaps k v
 empty = RankSelectMaps (RSArray.generateEmpty 1) []
@@ -177,3 +178,14 @@ unionOfTwoMaps (RSMap.RankSelectMap arr1 values1) (RSMap.RankSelectMap arr2 valu
 
     
 
+
+-- * Keys
+
+-- | Get keys lists
+-- >>> keys toBoundedEnum (fromListsAscN fromBoundedEnum 16 ([[("AT", 'a'), ("GT", 'b'), ("TT", 'd')], [("AG", 'b'), ("CG", 'd'), ("TT", 'c')]] :: [[(FixedList 2 (Letter "ACGT"), Char)]])) :: [[FixedList 2 (Letter "ACGT")]]
+-- [["AT","GT","TT"],["AG","CG","TT"]]
+keys
+  :: (Int -> k)
+  -> RankSelectMaps k v
+  -> [[k]]
+keys fromInt = map (RSMap.keys fromInt) . getListMap
