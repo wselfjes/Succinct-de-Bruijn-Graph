@@ -4,38 +4,47 @@
 {-# LANGUAGE FlexibleContexts          #-}
 {-# LANGUAGE KindSignatures            #-}
 {-# LANGUAGE ScopedTypeVariables       #-}
-{-# LANGUAGE TypeApplications          #-}
-{-# LANGUAGE TypeOperators             #-}
 module SuccinctDeBruijn where
 
-import           Control.Monad
-import           Data.DNA.Assembly
-import           Data.Enum.Letter
-import           Data.Fasta.String.Parse
-import           Data.Fasta.String.Types
-import           Data.Proxy
-import           GHC.TypeLits
-import           Plotting.ColoredDeBruijnGraph
+import           Data.List                    (intercalate)
 import           System.Environment
 import           System.Exit
 import           System.IO                      (BufferMode (..), hSetBuffering,
                                                  stdout)
-import           Text.Read                      (readMaybe)
+import           Control.Monad
+import           Data.Proxy
+import           GHC.TypeLits
+import           Data.Maybe                     (fromJust)
+
+import           Data.Fasta.String.Parse
+import           Data.Fasta.String.Types
+
+import           Data.DNA.Assembly
+import           Data.DNA.ColoredDeBruijnGraph
+import           Data.Enum.Letter
+import           Plotting.ColoredDeBruijnGraph
+
+data Args = Single 
+  { filePath :: String
+  , base :: SomeNat
+  }
+  | Colored
+  { filePaths :: [String]
+  , base :: SomeNat
+  }
 
 run :: IO ()
 run = do
   hSetBuffering stdout NoBuffering
   args <- parseArgs
   case args of
-    Nothing               -> putStrLn "Usage: stack run [base] [file]"
-    Just (fileName, base) -> case base of
-      Nothing -> putStrLn "base must be a natural number"
-      Just (SomeNat p@(_ :: Proxy n)) -> runWithArgs p fileName
+    (Single fp (SomeNat p@(_ :: Proxy n))) -> runWithArgsSingle p fp
+    (Colored fps (SomeNat p@(_ :: Proxy n))) -> runWithArgsColored p fps
 
 data AKnownNat (n :: Nat) = forall n. (KnownNat n) => AKnownNat (Proxy n)
 
-runWithArgs :: forall base. KnownNat base => Proxy base -> FilePath -> IO ()
-runWithArgs proxy fileName = do
+runWithArgsSingle :: forall base. KnownNat base => Proxy base -> FilePath -> IO ()
+runWithArgsSingle proxy fileName = do
   let baseValue = fromIntegral (natVal proxy)
   putStrLn ("Processing file " <> fileName <> " (using base " <> show baseValue <> ")")
   fastaData <- readFile fileName `as` "Reading file"
@@ -44,21 +53,32 @@ runWithArgs proxy fileName = do
   let readsDNASequences = map unsafeLetters readsString
   checkReads baseValue readsDNASequences `as` "Checking reads"
   let deBruijnGraph = graphFromReads readsDNASequences :: DeBruijnGraph base Nucleotide
-  writeMultiplicityList deBruijnGraph `as` "Writing as a mulitplicity list"
+  writeMultiplicityList (toMultiplicityList deBruijnGraph) `as` "Writing as a mulitplicity list"
   drawGraph deBruijnGraph `as` "Drawing deBruijnGraph"
-  --let assembledSequence = assemblyDeBruijnUsingEulerianWalk deBruijnGraph
-  --writeFile "data/result.txt" (show assembledSequence) `as` "Writing result"
+
+runWithArgsColored :: forall base. KnownNat base => Proxy base -> [FilePath] -> IO ()
+runWithArgsColored proxy fileNames = do
+  let baseValue = fromIntegral (natVal proxy)
+  putStrLn ("Processing file [" <> intercalate "," fileNames <> "] (using base " <> show baseValue <> ")")
+  fastaDatas <- mapM readFile fileNames `as` "Reading file"
+  let parsedFasta = map parseFasta fastaDatas
+  let readsString = map (map fastaSeq) parsedFasta
+  let readsDNASequences = map (map unsafeLetters) readsString
+  _ <- mapM (checkReads baseValue) readsDNASequences `as` "Checking reads"
+  let deBruijnGraphs = fromJust (graphsFromReads readsDNASequences) :: ColoredDeBruijnGraph base Nucleotide
+  writeMultiplicityList (toMultiplicityLists deBruijnGraphs) `as` "Writing as a mulitplicity list"
+  drawGraphs deBruijnGraphs `as` "Drawing deBruijnGraph"
+
 
 checkReads :: Int -> [ReadSegment] -> IO ()
 checkReads k sequences = unless (any ((> k) . length)  sequences) (die "Length of one of the read is less than base")
 
 writeMultiplicityList
-  :: (KnownNat n)
-  => DeBruijnGraph n (Letter "ACGT")
+  :: (Show b)
+  => [b]
   -> IO ()
-writeMultiplicityList deBruijnGraph = do
-  let multiplicityList = toMultiplicityList deBruijnGraph 
-  writeFile "data/MultiplicityList.txt" ((unlines . map show) multiplicityList)
+writeMultiplicityList list = do
+  writeFile "data/MultiplicityList.txt" ((unlines . map show) list)
   
 
 as :: IO a -> String -> IO a
@@ -68,11 +88,31 @@ command `as` name = do
   putStrLn "[OK]"
   return x
 
-parseArgs :: IO (Maybe (String, Maybe SomeNat))
+-- parseArgs :: IO Args
+-- parseArgs = do
+--   args <- getArgs
+--   print args
+--   case args of
+--     [file]       -> return $ Single file (fromJust (someNatVal 31))
+--     [b, file] | Just intBase <- readMaybe b
+--       -> return $ Single file (fromJust (someNatVal intBase))
+--     _ -> die "Cannot read base"
+--     (b:files) | Just intBase <- readMaybe b
+--       -> return $ Colored files (fromJust (someNatVal intBase))
+--     _ -> die "Cannot read base"
+
+
+
+parseArgs :: IO Args
 parseArgs = do
   args <- getArgs
-  return $ case args of
-    [file]       -> Just (file, someNatVal 32)
-    [base, file] | Just intBase <- readMaybe base
-      -> Just (file, someNatVal intBase)
-    _ -> Nothing
+  print args
+  case args of 
+    [b, file] -> do
+                  let intBase = read b
+                  return $ Single file (fromJust (someNatVal intBase))
+    (b:files) -> do
+                  let intBase = read b
+                  return $ Colored files (fromJust (someNatVal intBase))
+    _         -> die "Usage `stack run [base] [files]`"
+                  
