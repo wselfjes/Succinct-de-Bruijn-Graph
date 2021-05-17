@@ -41,7 +41,7 @@ toNodeEdgeList c deBruijnGraph = (nodes', edgesLabel)
     edges' = toMultiplicityList deBruijnGraph
     edgesLabel = foldr 
                  (\(edge, r) result 
-                    -> replicate r (show . head . edgeNodes $ edge, show . last . edgeNodes $ edge, RegularEdge c) ++ result) 
+                    -> replicate r (show . head . edgeNodes $ edge, show . last . edgeNodes $ edge, RegularEdge c) ++ result)
                  [] edges' 
     nodes' = zip (map show (nodes deBruijnGraph)) (repeat RegularNode)
 
@@ -63,7 +63,7 @@ drawGraph :: (KnownNat n, KnownNat (n+1)) => DeBruijnGraph n (Letter "ACGT") -> 
 drawGraph deBruijnGraph = uncurry draw (toNodeEdgeList (G.RGB 0 0 0) deBruijnGraph)
 
 drawGraphs :: (KnownNat n, KnownNat (n+1)) => ColoredDeBruijnGraph n (Letter "ACGT") -> IO ()
-drawGraphs coloredDeBruijnGraph = uncurry draw (toNodeEdgeLists (repeat (G.RGB 0 0 0)) coloredDeBruijnGraph)
+drawGraphs coloredDeBruijnGraph = uncurry draw (toNodeEdgeLists (cycle [G.RGB 0 0 0, G.RGB 255 0 0, G.RGB 0 255 0, G.RGB 0 0 255]) coloredDeBruijnGraph)
 
 draw :: [NodeGraph String] -> [EdgeGraph String] -> IO ()
 draw vs es = do

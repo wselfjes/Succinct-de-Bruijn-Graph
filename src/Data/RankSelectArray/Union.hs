@@ -7,6 +7,7 @@ import           Data.RankSelectArray.Class
 import           Data.RankSelectArray.Diff
 import           Data.RankSelectArray.SDArray (SDArray')
 import           Data.RankSelectArray.Utils
+import qualified Data.Set as S
 
 -- $setup
 
@@ -51,14 +52,16 @@ fromListsAsc
   -> UnionsDiff a b c
 fromListsAsc size left right = Unions commonArray [Union leftArray commonDiffArray , Union rightArray commonDiffArray]
   where
-    commonPart = filter (`elem` right) left
+    rightSet = S.fromList right
+    leftSet = S.fromList left
+    commonPart = S.filter (`elem` rightSet) leftSet
     commonSize = size
-    commonArray = fromOnes commonSize (length commonPart) commonPart
-    commonDiffArray = Data.RankSelectArray.Diff.fromListsAsc size commonPart []
-    leftPart = filter (`notElem` commonPart) left
-    rightPart = filter (`notElem` commonPart) right
-    leftArray = fromOnes size (length leftPart) leftPart
-    rightArray = fromOnes size (length rightPart) rightPart
+    commonArray = fromOnes commonSize (length commonPart) (S.toList commonPart)
+    commonDiffArray = Data.RankSelectArray.Diff.fromListsAsc size (S.toList commonPart) []
+    leftPart = S.filter (`notElem` commonPart) leftSet
+    rightPart = S.filter (`notElem` commonPart) rightSet
+    leftArray = fromOnes size (length leftPart) (S.toList leftPart)
+    rightArray = fromOnes size (length rightPart) (S.toList rightPart)
 
 
 -- | Convert two rankSelect arrays into UnionsDiff
