@@ -95,7 +95,7 @@ fromListsEnumOfTwoWith combine n (FixedList kvss) = RankSelectMaps {commonPart=c
   where
     maps = zipWith (\up vs -> RSMap.RankSelectMap up (Vector.fromList (map snd vs))) uniqueParts kvss'
     (Unions commonPartArray uniqueParts) = unionOfTwo
-    unionOfTwo = fromListsAsc n (map fst first) (map fst second)
+    unionOfTwo = fromLists n [map fst first, map fst second]
     kvss'@(first:(second:_)) = fmap (nubSortOnWith combine' fst) kvss
     combine' (k, v) (_, v') =  (k, v `combine` v')
 
@@ -138,7 +138,7 @@ addMapEnumWith combine n kvs maps@(RankSelectMaps cp listMaps) = RankSelectMaps 
     kvs' = nubSortOnWith combine' fst kvs
     combine' (k, v) (_, v') =  (k, v `combine` v')
     unionsDiff = toUnionsDiff maps
-    newUnionsDiff = addArrayToUnions n (map fst kvs') unionsDiff
+    newUnionsDiff = addArrayToUnions (map fst kvs') unionsDiff
     newMapBitmap = getUnion newUnionsDiff 0
     newMap = RSMap.RankSelectMap newMapBitmap (V.fromList (map snd kvs'))
     maps' = newMap : listMaps
