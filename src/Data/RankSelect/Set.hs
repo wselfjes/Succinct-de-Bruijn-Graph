@@ -8,12 +8,12 @@
 -- >  import qualified Data.RankSelect.Set as RSSet
 module Data.RankSelect.Set where
 
-import           Data.List             (intercalate)
 import qualified GHC.Exts              as GHC
 
 import qualified Data.RankSelectArray.Class   as RankSelectArray
 import           Data.RankSelectArray.SDArray (SDArray')
 import qualified Data.RankSelectArray.SDArray as SDArray
+import qualified Data.RankSelectArray.Utils as Utils
 
 import           Data.Enum.Utils
 import           Data.List.Utils
@@ -26,12 +26,12 @@ import           Data.List.Utils
 -- that supports efficient 'rank' and 'select' operations.
 --
 -- Many operations on 'RankSelectSet' rely on keys being 'Enum' and 'Bounded'.
-data RankSelectSet t a = RankSelectSet
+newtype RankSelectSet t a = RankSelectSet
   { rsBitmap :: t }
   deriving (Eq)
 
 instance (Show a, Bounded a, Enum a, RankSelectArray.RankSelectArray t) => Show (RankSelectSet t a) where
-  show rs = intercalate " "
+  show rs = unwords
     [ "fromListAscN fromBoundedEnum"
     , show (capacity rs)
     , show (size rs)
@@ -101,6 +101,12 @@ toListBoundedEnum = toList toBoundedEnum
 
 -- ** Convert enumerations of elements to 'RankSelectSet'
 
+-- |
+--
+-- >>> rsBitmap (fromEnumList 10 [0,1,2,4,6,8,10] :: RankSelectSet SDArray' Int8)
+-- 11101010101
+-- >>> rsBitmap (fromEnumList 10 [1,2,3,5,7,9] :: RankSelectSet SDArray' Int8)
+-- 01110101010
 fromEnumList :: (RankSelectArray.RankSelectArray t) => Int -> [Int] -> RankSelectSet t a
 fromEnumList n = fromEnumListAsc n . nubSort
 
@@ -159,16 +165,24 @@ fromListAscBoundedEnum xs = fromListAsc fromBoundedEnum (boundedEnumSize xs) xs
 
 -- * Operations over sets
 
-intersect
+-- | https://en.wikipedia.org/wiki/Intersection_(set_theory)
+--
+-- >>> rsBitmap $ intersection (fromEnumList 10 [0,1,2,4,6,8,10] :: RankSelectSet SDArray' Int8) (fromEnumList 10 [1,2,3,5,7,9] :: RankSelectSet SDArray' Int8)
+-- 01100000000
+intersection
   :: (RankSelectArray.RankSelectArray t)
   => RankSelectSet t a
   -> RankSelectSet t a
   -> RankSelectSet t a
-intersect x y = x
+intersection x y = RankSelectSet (Utils.intersection (rsBitmap x) (rsBitmap y))
 
-complement
+-- | https://en.wikipedia.org/wiki/Complement_(set_theory)
+--
+-- >>> rsBitmap $ difference (fromEnumList 10 [0,1,2,4,6,8,10] :: RankSelectSet SDArray' Int8) (fromEnumList 10 [1, 2] :: RankSelectSet SDArray' Int8)
+-- 10001010101
+difference
   :: (RankSelectArray.RankSelectArray t)
   => RankSelectSet t a
   -> RankSelectSet t a
   -> RankSelectSet t a
-complement x y = x
+difference x y = RankSelectSet (Utils.difference (rsBitmap x) (rsBitmap y))

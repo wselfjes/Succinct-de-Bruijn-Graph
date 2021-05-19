@@ -25,7 +25,7 @@ instance RankSelectArray VectorBitArray where
   setBits                       = flip setBits'
   select arr q i                = fromMaybe (-1) (select' q i arr)
   rank arr q i                  = rank' q i arr
-  getBit i (VectorBitArray arr) = fromMaybe False (arr V.!? i)
+  getBit (VectorBitArray arr) i = fromMaybe False (arr V.!? i)
   getSize                       = length . getVec
   getOneCount                   = length . filter id . toList
 

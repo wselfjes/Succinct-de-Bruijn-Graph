@@ -57,11 +57,11 @@ fromLists size (xs:(ys:rest)) = unions
     union = Unions commonArray [Union leftArray commonDiffArray , Union rightArray commonDiffArray]
     rightArray = S.rsBitmap rightPart
     leftArray = S.rsBitmap leftPart
-    rightPart = ysSet `S.complement` commonPart
-    leftPart = xsSet `S.complement` commonPart
+    rightPart = ysSet `S.difference` commonPart
+    leftPart = xsSet `S.difference` commonPart
     commonDiffArray = Diff.fromListsAsc size (toOnes commonArray) []
     commonArray = S.rsBitmap commonPart
-    commonPart = xsSet `S.intersect` ysSet
+    commonPart = xsSet `S.intersection` ysSet
     ysSet = S.fromEnumList size ys
     xsSet = S.fromEnumList size xs
 
@@ -96,6 +96,7 @@ addArrayToUnions
   -> UnionsDiff a b c
 addArrayToUnions ones (Unions commonPart uniqParts) = Unions commonPart (newUniqPart:uniqParts)
   where
+  -- TODO: rewrite method with RSSets
     size = getSize commonPart
     commonOnes = toOnes commonPart
     uniquePart = filter (`notElem` commonOnes) ones

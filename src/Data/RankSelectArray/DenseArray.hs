@@ -99,8 +99,8 @@ blockToSl
 blockToSl storage (start, end) forOnes = map Index (go (unPIndex start))
   where
     go i
-      | i > (unPIndex end) = []
-      | otherwise = if getBit i storage == forOnes
+      | i > unPIndex end = []
+      | otherwise = if getBit storage i == forOnes
                     then i : go (i + 1)
                     else go (i + 1)
 
@@ -115,7 +115,7 @@ blockToSs storage (start, end) forOnes = map Index (concatMap (take (l3 - 1)) (c
   where
     go i
       | i >= (unPIndex end) = []
-      | getBit i storage == forOnes = i : go (i + 1)
+      | getBit storage i == forOnes = i : go (i + 1)
       | otherwise = go (i + 1)
 
 -- | Generate two indexes. Ss for dense block and Sl for sparse block
@@ -199,7 +199,7 @@ searchInSsBlock indexes storage ind forOnes = pos
     l3Value = unIndex (indexes V.! l3Index)
     go accumulator i'
       | accumulator == i = i' - 1
-      | getBit i' storage == forOnes = go (accumulator + 1) (i' + 1)
+      | getBit storage i' == forOnes = go (accumulator + 1) (i' + 1)
       | otherwise = go accumulator (i' + 1)
 
 
