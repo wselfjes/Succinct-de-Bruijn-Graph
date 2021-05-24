@@ -76,7 +76,7 @@ decompositionAsc
   => [a]
   -> [a]
   -> ([a], [a], [a]) -- ^ CommonPart, Unique part 1 , Unique part 2
-decompositionAsc xs ys = go xs ys [] [] []
+decompositionAsc left right = go left right [] [] []
   where
     go [] [] cp up1 up2 = (reverse cp, reverse up1, reverse up2)
     go xs []  cp up1 up2 = (reverse cp, reverse up1 ++ xs, reverse up2)
@@ -85,7 +85,7 @@ decompositionAsc xs ys = go xs ys [] [] []
       | x == y = go xs ys (x:cp) up1 up2
       | x > y = go (x:xs) ys cp up1 (y:up2)
       | x < y = go xs (y:ys) cp (x:up1) up2
-
+      | otherwise = (cp, up1, up2)
 
 
 -- | Convert two asc list to Unions Structure
