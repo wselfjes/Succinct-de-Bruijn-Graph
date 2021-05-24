@@ -10,6 +10,7 @@ import           Data.RankSelectArray.Utils
 
 -- $setup
 -- >>> import Data.RankSelectArray.SDArray (SDArray')
+-- >>> import Data.List (intersect, (\\))
 
 -- | Disjoint Union of two RankSelectArray
 data Union a b = Union a b
@@ -64,6 +65,53 @@ fromLists size (xs:(ys:rest)) = unions
     commonPart = xsSet `S.intersection` ysSet
     ysSet = S.fromEnumList size ys
     xsSet = S.fromEnumList size xs
+
+
+-- | Decompose two list in common part and two unique parts
+--
+-- >>> decompositionAsc [1, 3, 4, 6, 8, 10] [0, 2, 3, 5, 6, 9, 10]
+-- ([3,6,10],[1,4,8],[0,2,5,9])
+decompositionAsc
+  :: (Eq a, Ord a)
+  => [a]
+  -> [a]
+  -> ([a], [a], [a]) -- ^ CommonPart, Unique part 1 , Unique part 2
+decompositionAsc xs ys = go xs ys [] [] []
+  where
+    go [] [] cp up1 up2 = (reverse cp, reverse up1, reverse up2)
+    go xs []  cp up1 up2 = (reverse cp, reverse up1 ++ xs, reverse up2)
+    go [] ys cp up1 up2 = (reverse cp, reverse up1, reverse up2 ++ ys)
+    go (x:xs) (y:ys) cp up1 up2
+      | x == y = go xs ys (x:cp) up1 up2
+      | x > y = go (x:xs) ys cp up1 (y:up2)
+      | x < y = go xs (y:ys) cp (x:up1) up2
+
+
+
+-- | Convert two asc list to Unions Structure
+-- The intersection of two arrays must be greater than 50%
+--
+-- >>> Data.RankSelectArray.Union.fromListsAsc 10 [[4, 6, 8, 10],[1, 2, 3, 5, 7, 9]] :: UnionsDiff SDArray' SDArray' SDArray'
+-- Unions 00000000000 [Union 00001010101 (Diff 00000000000 00000000000),Union 01110101010 (Diff 00000000000 00000000000)]
+--
+-- >>> Data.RankSelectArray.Union.fromListsAsc 10 [[0, 1, 2, 4, 6, 8, 10],[1, 2, 3, 5, 7, 9]] :: UnionsDiff SDArray' SDArray' SDArray'
+-- Unions 01100000000 [Union 10001010101 (Diff 01100000000 00000000000),Union 00010101010 (Diff 01100000000 00000000000)]
+fromListsAsc
+  :: RankSelectArray a
+  => Int
+  -> [[Int]]
+  -> UnionsDiff a a a
+fromListsAsc size [] = Unions (generateEmpty size) []
+fromListsAsc size [ones] = Unions (fromOnes size (length ones) ones) [Union (fromOnes size (length ones) ones) (Diff.fromListsAsc size ones [])]
+fromListsAsc size (xs:(ys:rest)) = unions
+  where
+    unions = foldr addArrayToUnions union rest
+    union = Unions commonArray [Union leftArray commonDiffArray, Union rightArray commonDiffArray]
+    (cp, up1, up2) = decompositionAsc xs ys
+    commonArray = fromOnes size (length cp) cp
+    leftArray = fromOnes size (length up1) up1
+    rightArray = fromOnes size (length up2) up2
+    commonDiffArray = Diff.fromListsAsc size cp []
 
 
 -- | Convert two rankSelect arrays into UnionsDiff
