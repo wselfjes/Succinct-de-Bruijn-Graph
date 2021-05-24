@@ -45,10 +45,10 @@ instance (RankSelectArray a, RankSelectArray b) => RankSelectArray (Union a b) w
 -- >>> Data.RankSelectArray.Union.fromLists 10 [[0, 1, 2, 4, 6, 8, 10],[1, 2, 3, 5, 7, 9]] :: UnionsDiff SDArray' SDArray' SDArray'
 -- Unions 01100000000 [Union 10001010101 (Diff 01100000000 00000000000),Union 00010101010 (Diff 01100000000 00000000000)]
 fromLists
-  :: (RankSelectArray a, RankSelectArray c)
+  :: (RankSelectArray a)
   => Int  -- ^ Size
   -> [[Int]] -- ^ Ones
-  -> UnionsDiff a a c
+  -> UnionsDiff a a a
 fromLists size [] = Unions (generateEmpty size) []
 fromLists size [ones] = Unions (fromOnes size (length ones) ones) [Union (fromOnes size (length ones) ones) (Diff.fromListsAsc size ones [])]
 fromLists size (xs:(ys:rest)) = unions
@@ -90,20 +90,20 @@ fromRankSelectArrays first second = Unions commonArray [Union leftArray commonDi
 -- >>> addArrayToUnions [0, 8] (Data.RankSelectArray.Union.fromLists 10 [[0, 1, 2, 4, 6, 8],[1, 2, 3, 5, 7, 9]]) :: UnionsDiff SDArray' SDArray' SDArray'
 -- Unions 01100000000 [Union 10000000100 (Diff 01100000000 01100000000),Union 10001010100 (Diff 01100000000 00000000000),Union 00010101010 (Diff 01100000000 00000000000)]
 addArrayToUnions
-  :: (RankSelectArray a, RankSelectArray b, RankSelectArray c)
+  :: (RankSelectArray a)
   => [Int] -- ^ Ones
-  -> UnionsDiff a b c
-  -> UnionsDiff a b c
+  -> UnionsDiff a a a
+  -> UnionsDiff a a a
 addArrayToUnions ones (Unions commonPart uniqParts) = Unions commonPart (newUniqPart:uniqParts)
   where
-  -- TODO: rewrite method with RSSets
-    size = getSize commonPart
-    commonOnes = toOnes commonPart
-    uniquePart = filter (`notElem` commonOnes) ones
-    diffPart = filter (`notElem` ones) commonOnes
-    diffPartArray = fromOnes size (length diffPart) diffPart
-    uniqueArray = fromOnes size (length uniquePart) uniquePart
     newUniqPart = Union uniqueArray (Diff commonPart diffPartArray)
+    diffPartArray = S.rsBitmap diffSet
+    uniqueArray = S.rsBitmap uniqueSet
+    uniqueSet = S.difference inputSet commonSet
+    diffSet = S.difference commonSet inputSet
+    inputSet = S.fromEnumList size ones 
+    commonSet = S.RankSelectSet commonPart
+    size = getSize commonPart
 
 
 -- ** Select Union in Unions
