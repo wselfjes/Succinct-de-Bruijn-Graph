@@ -86,7 +86,7 @@ graphsFromTwoReads first second = ColoredDeBruijnGraph $ RSMaps.fromListsEnumOfT
       secondChunks = makeChunks second
       makeChunks segments = [ (chunk, 1)
                             | segment <- segments
-                            , chunk <- map fromEnum (readChunks segment :: [Chunk (n + 1)])
+                            , chunk <- fixedBoundedEnumChunks @(n+1) Proxy segment
                             ]
 
 -- | Union of two de Bruijn graphs
@@ -116,5 +116,5 @@ addReadsToGraph r (ColoredDeBruijnGraph maps) = ColoredDeBruijnGraph newMaps
     chunks = makeChunks r
     makeChunks segments = [ (chunk, 1)
                           | segment <- segments
-                          , chunk <- map fromEnum (readChunks segment :: [Chunk (n + 1)])
+                          , chunk <- fixedBoundedEnumChunks @(n+1) Proxy segment
                           ]

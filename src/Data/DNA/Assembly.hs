@@ -31,21 +31,6 @@ type Contig = [Nucleotide]
 
 type Scaffold = [Maybe Nucleotide]
 
-newtype Chunk n = Chunk { getChunk :: FixedList n Nucleotide }
-  deriving (Eq, Ord, Bounded, Enum)
-
-instance Show (Chunk n) where
-  show = show . map getLetter . getFixedList . getChunk
-
--- |
---
--- >>> readChunks (unsafeLetters "AAACGTCAA") :: [Chunk 5]
--- ["AAACG","AACGT","ACGTC","CGTCA","GTCAA"]
-readChunks :: forall n. KnownNat n => ReadSegment -> [Chunk n]
-readChunks = map (Chunk . FixedList) . chunksOf n
-  where
-    n = fromIntegral (natVal (Proxy :: Proxy n))
-
 newtype DeBruijnGraph n a = DeBruijnGraph
   { edgeCount :: RankSelectMap' (Edge n a) Int }
 
@@ -90,7 +75,7 @@ graphFromReads
 graphFromReads segments = DeBruijnGraph $ RSMap.fromEnumListWith (+) size
   [ (chunkId, 1)
   | segment <- segments
-  , chunkId <- map fromEnum (readChunks segment :: [Chunk (n + 1)])
+  , chunkId <- fixedBoundedEnumChunks @(n+1) Proxy segment
   ] where
       size = 4 ^ (n + 1)
       n = fromIntegral (natVal (Proxy :: Proxy n))
