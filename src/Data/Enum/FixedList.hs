@@ -80,19 +80,23 @@ fixedChunks = map FixedList . chunksOf n
 -- @
 --
 -- prop> fixedBoundedEnumChunks @3 Proxy xs == map fromEnum (fixedChunks @3 (xs :: [Char]))
+--
+-- >>> fixedBoundedEnumChunks @3 Proxy ([] :: [Letter "ACGT"])
+-- []
 fixedBoundedEnumChunks
   :: forall n a. (KnownNat n, Bounded a, Enum a) => Proxy n -> [a] -> [Int]
 fixedBoundedEnumChunks _ ys = go 0 [] ys
   where
-    go _ _ [] = []
-    go _ [] xs = go (fromEnum (FixedList @n (minBound : zs))) is xs'
+    go _ _ []  = []
+    go _ [] xs = if length firstChunk < n then [] else current : go current elValues xs'
       where
-        is = map fromBoundedEnum (minBound : zs)
-        (zs, xs') = splitAt (n - 1) xs
-    go j (i:is) (x:xs) = j' : go j' (is ++ [xN]) xs
+        current = fromEnum (FixedList @n firstChunk)
+        (firstChunk, xs') = splitAt n xs
+        elValues = fmap fromBoundedEnum firstChunk
+    go current (elValue:elValues) (x:xs) = newCurrent : go newCurrent elValues' xs
       where
-        j' = (j - i) `div` base + xN * base ^ (n - 1)
+        newCurrent = (current - elValue * base ^ (n - 1)) * base + xN
+        elValues' = elValues <> [xN]
         xN = fromBoundedEnum x
-
     n = fromIntegral (natVal (Proxy :: Proxy n))
     base = boundedEnumSize ys

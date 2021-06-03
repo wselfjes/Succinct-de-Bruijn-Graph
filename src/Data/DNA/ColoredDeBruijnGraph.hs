@@ -48,6 +48,9 @@ allEdges
   -> [Edge n a]
 allEdges = nub . concat . RSMaps.keys toBoundedEnum . getMaps
 
+-- TODO: Get de Bruijn Graph from ColoredDeBruijnGraph by Index
+-- TODO: Parametrize RSMap backend in DeBruijnGraph structure
+
 
 -- | Convert reads into graphs
 --
