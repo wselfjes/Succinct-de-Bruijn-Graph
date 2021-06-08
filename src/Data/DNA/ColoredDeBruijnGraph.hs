@@ -14,7 +14,8 @@ import           Data.DNA.Assembly
 import           Data.Enum.FixedList
 import           Data.Enum.Utils
 import           Data.List
-import           Data.RankSelect.Maps as RSMaps
+import qualified Data.RankSelect.Maps as RSMaps
+import qualified Data.RankSelect.Map as RSMap
 
 
 -- $setup
@@ -47,6 +48,12 @@ allEdges
   => ColoredDeBruijnGraph n a
   -> [Edge n a]
 allEdges = nub . concat . RSMaps.keys toBoundedEnum . getMaps
+
+countUniqueColoredEdges
+  :: (Bounded a, Enum a, Eq a, KnownNat n, KnownNat (n + 1))
+  => ColoredDeBruijnGraph n a
+  -> [Int]
+countUniqueColoredEdges = map RSMap.size . RSMaps.getListMap . getMaps 
 
 -- TODO: Get de Bruijn Graph from ColoredDeBruijnGraph by Index
 -- TODO: Parametrize RSMap backend in DeBruijnGraph structure
@@ -110,7 +117,7 @@ addReadsToGraph
   -> ColoredDeBruijnGraph n a
 addReadsToGraph r (ColoredDeBruijnGraph maps) = ColoredDeBruijnGraph newMaps
   where
-    newMaps = addMapEnumWith (+) size chunks maps
+    newMaps = RSMaps.addMapEnumWith (+) size chunks maps
     size = 4 ^ (n + 1)
     n = fromIntegral (natVal (Proxy :: Proxy n))
     chunks = makeChunks r
