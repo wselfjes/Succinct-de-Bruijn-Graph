@@ -38,6 +38,11 @@ instance (Show (Edge n a), Bounded a, Enum a, KnownNat (n + 1))
   => Show (DeBruijnGraph n a) where
   show = show . toMultiplicityList
 
+countUniqueEdges
+  :: (Bounded a, Enum a, KnownNat (n + 1))
+  => DeBruijnGraph n a -> Int
+countUniqueEdges = RSMap.size . edgeCount
+
 toMultiplicityList
   :: (Bounded a, Enum a, KnownNat (n + 1))
   => DeBruijnGraph n a -> [(Edge n a, Int)]

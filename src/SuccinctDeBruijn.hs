@@ -22,10 +22,13 @@ import           Data.Fasta.String.Types
 import           Data.DNA.Assembly
 import           Data.DNA.ColoredDeBruijnGraph
 import           Data.Enum.Letter
-import           Plotting.ColoredDeBruijnGraph
 
 data Args = Single 
   { filePath :: String
+  , base :: SomeNat
+  }
+  | Multiple
+  { filePaths :: [String]
   , base :: SomeNat
   }
   | Colored
@@ -39,6 +42,7 @@ run = do
   args <- parseArgs
   case args of
     (Single fp (SomeNat p@(_ :: Proxy n))) -> runWithArgsSingle p fp
+    (Multiple fps (SomeNat p@(_ :: Proxy n))) -> runWithArgsMultiple p fps
     (Colored fps (SomeNat p@(_ :: Proxy n))) -> runWithArgsColored p fps
 
 data AKnownNat (n :: Nat) = forall n. (KnownNat n) => AKnownNat (Proxy n)
@@ -53,8 +57,19 @@ runWithArgsSingle proxy fileName = do
   let readsDNASequences = map unsafeLetters readsString
   checkReads baseValue readsDNASequences `as` "Checking reads"
   let deBruijnGraph = graphFromReads readsDNASequences :: DeBruijnGraph base Nucleotide
-  writeMultiplicityList (toMultiplicityList deBruijnGraph) `as` "Writing as a mulitplicity list"
-  drawGraph deBruijnGraph `as` "Drawing deBruijnGraph"
+  print (countUniqueEdges deBruijnGraph)
+
+runWithArgsMultiple :: forall base. KnownNat base => Proxy base -> [FilePath] -> IO ()
+runWithArgsMultiple proxy fileNames = do
+  let baseValue = fromIntegral (natVal proxy)
+  putStrLn ("Processing file [" <> intercalate "," fileNames <> "] (using base " <> show baseValue <> ")")
+  fastaDatas <- mapM readFile fileNames `as` "Reading file"
+  let parsedFasta = map parseFasta fastaDatas
+  let readsString = map (map fastaSeq) parsedFasta
+  let readsDNASequences = map (map unsafeLetters) readsString
+  _ <- mapM (checkReads baseValue) readsDNASequences `as` "Checking reads"
+  let deBruijnGraphs = map graphFromReads readsDNASequences :: [DeBruijnGraph base Nucleotide]
+  print (map countUniqueEdges deBruijnGraphs)
 
 runWithArgsColored :: forall base. KnownNat base => Proxy base -> [FilePath] -> IO ()
 runWithArgsColored proxy fileNames = do
@@ -66,8 +81,7 @@ runWithArgsColored proxy fileNames = do
   let readsDNASequences = map (map unsafeLetters) readsString
   _ <- mapM (checkReads baseValue) readsDNASequences `as` "Checking reads"
   let deBruijnGraphs = fromJust (graphsFromReads readsDNASequences) :: ColoredDeBruijnGraph base Nucleotide
-  writeMultiplicityList (toMultiplicityLists deBruijnGraphs) `as` "Writing as a mulitplicity list"
-  drawGraphs deBruijnGraphs `as` "Drawing deBruijnGraph"
+  print (countUniqueColoredEdges deBruijnGraphs)
 
 
 checkReads :: Int -> [ReadSegment] -> IO ()
@@ -88,31 +102,19 @@ command `as` name = do
   putStrLn "[OK]"
   return x
 
--- parseArgs :: IO Args
--- parseArgs = do
---   args <- getArgs
---   print args
---   case args of
---     [file]       -> return $ Single file (fromJust (someNatVal 31))
---     [b, file] | Just intBase <- readMaybe b
---       -> return $ Single file (fromJust (someNatVal intBase))
---     _ -> die "Cannot read base"
---     (b:files) | Just intBase <- readMaybe b
---       -> return $ Colored files (fromJust (someNatVal intBase))
---     _ -> die "Cannot read base"
-
-
-
 parseArgs :: IO Args
 parseArgs = do
   args <- getArgs
   print args
   case args of 
-    [b, file] -> do
+    ["single", b, file] -> do
                   let intBase = read b
                   return $ Single file (fromJust (someNatVal intBase))
-    (b:files) -> do
+    ("multiple":(b:files)) -> do
+                  let intBase = read b
+                  return $ Multiple files (fromJust (someNatVal intBase))
+    ("uniondiff":(b:files)) -> do
                   let intBase = read b
                   return $ Colored files (fromJust (someNatVal intBase))
-    _         -> die "Usage `stack run [base] [files]`"
+    _         -> die "Usage `stack run [single|multiple|uniondiff] [base] [files]`"
                   
