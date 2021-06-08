@@ -55,6 +55,7 @@ runWithArgsSingle proxy fileName = do
   let parsedFasta = parseFasta fastaData
   let readsString = map fastaSeq parsedFasta
   let readsDNASequences = map unsafeLetters readsString
+  print (filter (< baseValue) (map length readsDNASequences))
   checkReads baseValue readsDNASequences `as` "Checking reads"
   let deBruijnGraph = graphFromReads readsDNASequences :: DeBruijnGraph base Nucleotide
   print (countUniqueEdges deBruijnGraph)
