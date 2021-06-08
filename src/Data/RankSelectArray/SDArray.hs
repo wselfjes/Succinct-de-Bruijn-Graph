@@ -148,7 +148,7 @@ sdarrayRank SDArray{..} True pos = if getPos y' x' < 0 then 0 else getPos y' x'
 
     getPos :: Int -> Int -> Int
     getPos y x
-      | not (getBit y upperBits) = x
+      | not (getBit upperBits y) = x
       | (fromIntegral . toInteger) (lowerBits !!! fromIntegral x) >= j = if (fromIntegral . toInteger) (lowerBits !!! fromIntegral x) == j then x + 1 else x
       | otherwise = getPos (y + 1) (x + 1)
 
@@ -156,7 +156,10 @@ sdarrayRank SDArray{..} True pos = if getPos y' x' < 0 then 0 else getPos y' x'
 -- | Get bit from bit array is equal @rank ba pos@ - @rank ba (pos - 1)@
 sdarrayGetBit
   :: RankSelectArray darray
-  => Int
-  -> SDArray darray
+  => SDArray darray
+  -> Int
   -> Bool
-sdarrayGetBit pos arr = (rank arr True pos) - (rank arr True (pos - 1)) /= 0
+sdarrayGetBit arr pos
+  | pos < 0   = False
+  | pos == 0  = select arr True 1 == 0
+  | otherwise = rank arr True pos - rank arr True (pos - 1) /= 0

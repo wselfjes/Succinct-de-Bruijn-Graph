@@ -61,7 +61,7 @@ testGetBit :: IO ()
 testGetBit = bit `shouldBe` False
   where
     bitArray = fromOnes 8 2 [5, 7] :: SDArray'
-    bit = sdarrayGetBit 6 bitArray
+    bit = sdarrayGetBit bitArray 6
 
 spec :: Spec
 spec =
