@@ -1,7 +1,8 @@
 module Data.List.Utils where
 
-import           Data.Function (on)
-import           Data.List     (sortBy, tails)
+import           Data.Function   (on)
+import           Data.List       (sortBy, tails)
+import           Data.List.Split (splitOn)
 
 -- | /O(n log n)/. The 'nubSort' function sorts and removes duplicate elements from a list.
 -- In particular, it keeps only the first occurrence of each element.
@@ -68,3 +69,10 @@ dropEnd n = go []
     go _ []          = []
     go (x:xs) (y:ys) = x : go (xs ++ [y]) ys
 
+
+-- | remove N in by spliting by N
+--
+rmN
+  :: String
+  -> [String]
+rmN = splitOn "N"

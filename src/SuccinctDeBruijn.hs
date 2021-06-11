@@ -19,6 +19,7 @@ import           Data.Maybe                     (fromJust)
 import           Data.Fasta.String.Parse
 import           Data.Fasta.String.Types
 
+import           Data.List.Utils (rmN)
 import           Data.DNA.Assembly
 import           Data.DNA.ColoredDeBruijnGraph
 import           Data.Enum.Letter
@@ -54,8 +55,7 @@ runWithArgsSingle proxy fileName = do
   fastaData <- readFile fileName `as` "Reading file"
   let parsedFasta = parseFasta fastaData
   let readsString = map fastaSeq parsedFasta
-  let readsDNASequences = map unsafeLetters readsString
-  print (filter (< baseValue) (map length readsDNASequences))
+  let readsDNASequences = map (unsafeLetters . concat . rmN) readsString
   checkReads baseValue readsDNASequences `as` "Checking reads"
   let deBruijnGraph = graphFromReads readsDNASequences :: DeBruijnGraph base Nucleotide
   print (countUniqueEdges deBruijnGraph)
@@ -67,7 +67,7 @@ runWithArgsMultiple proxy fileNames = do
   fastaDatas <- mapM readFile fileNames `as` "Reading file"
   let parsedFasta = map parseFasta fastaDatas
   let readsString = map (map fastaSeq) parsedFasta
-  let readsDNASequences = map (map unsafeLetters) readsString
+  let readsDNASequences = map (map (unsafeLetters . concat . rmN)) readsString
   _ <- mapM (checkReads baseValue) readsDNASequences `as` "Checking reads"
   let deBruijnGraphs = map graphFromReads readsDNASequences :: [DeBruijnGraph base Nucleotide]
   print (map countUniqueEdges deBruijnGraphs)
@@ -79,7 +79,7 @@ runWithArgsColored proxy fileNames = do
   fastaDatas <- mapM readFile fileNames `as` "Reading file"
   let parsedFasta = map parseFasta fastaDatas
   let readsString = map (map fastaSeq) parsedFasta
-  let readsDNASequences = map (map unsafeLetters) readsString
+  let readsDNASequences = map (map (unsafeLetters . concat . rmN)) readsString
   _ <- mapM (checkReads baseValue) readsDNASequences `as` "Checking reads"
   let deBruijnGraphs = fromJust (graphsFromReads readsDNASequences) :: ColoredDeBruijnGraph base Nucleotide
   print (countUniqueColoredEdges deBruijnGraphs)
