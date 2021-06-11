@@ -1,0 +1,1 @@
+stack run uniondiff 30 data/SRR10445449.1.cutted.new.fasta    201,46s user 124,09s system 716% cpu 45,457 total

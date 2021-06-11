@@ -1,0 +1,1 @@
+stack run single 30 data/SRR10445449.1.cutted.new.fasta  68,26s user 44,79s system 730% cpu 15,486 total
